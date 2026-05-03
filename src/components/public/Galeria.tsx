@@ -252,7 +252,7 @@ export default function Galeria() {
           <button
             onClick={() => {
               const text = encodeURIComponent("Hola! Vi su galería y me gustaría consultar sobre catering para mi evento.");
-              window.open(`https://wa.me/5491100000000?text=${text}`, "_blank");
+              window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
             }}
             className="group flex items-center gap-3 px-10 py-4 border border-gold/40 text-white/70 hover:text-white hover:border-gold text-xs tracking-[0.4em] uppercase transition-all duration-500"
           >

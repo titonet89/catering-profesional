@@ -7,48 +7,43 @@ const CATEGORIAS = [
   {
     nombre: "Cristalería",
     items: [
-      { nombre: "Copa de vino tinto",      precio: 350,  unidad: "u." },
-      { nombre: "Copa de vino blanco",     precio: 320,  unidad: "u." },
-      { nombre: "Copa de champagne",       precio: 300,  unidad: "u." },
-      { nombre: "Vaso de agua",            precio: 250,  unidad: "u." },
-      { nombre: "Copa de cognac",          precio: 380,  unidad: "u." },
+      { nombre: "Copa de vino tinto",  precio: 250, unidad: "u." },
+      { nombre: "Copa de agua",        precio: 250, unidad: "u." },
+      { nombre: "Copa de champagne",   precio: 250, unidad: "u." },
+      { nombre: "Vaso trago largo",    precio: 250, unidad: "u." },
     ],
   },
   {
     nombre: "Vajilla",
     items: [
-      { nombre: "Plato playo",             precio: 280,  unidad: "u." },
-      { nombre: "Plato hondo",             precio: 280,  unidad: "u." },
-      { nombre: "Alzaplatos dorado",       precio: 450,  unidad: "u." },
-      { nombre: "Plato de postre",         precio: 220,  unidad: "u." },
-      { nombre: "Fuente de servicio",      precio: 550,  unidad: "u." },
+      { nombre: "Plato playo",         precio: 350, unidad: "u." },
+      { nombre: "Plato hondo",         precio: 350, unidad: "u." },
+      { nombre: "Plato de entrada",    precio: 300, unidad: "u." },
+      { nombre: "Fuente de servicio",  precio: 600, unidad: "u." },
     ],
   },
   {
     nombre: "Cubertería & Accesorios",
     items: [
-      { nombre: "Set de cubiertos (4 pz)", precio: 180,  unidad: "set" },
-      { nombre: "Pinzas de servicio",      precio: 150,  unidad: "u." },
-      { nombre: "Sopera de porcelana",     precio: 700,  unidad: "u." },
-      { nombre: "Panera plateada",         precio: 480,  unidad: "u." },
+      { nombre: "Set de cubiertos (3 pz)", precio: 450, unidad: "set" },
+      { nombre: "Pinzas de servicio",      precio: 150, unidad: "u." },
+      { nombre: "Cazuela rústica",         precio: 350, unidad: "u." },
     ],
   },
   {
     nombre: "Mantelería",
     items: [
-      { nombre: "Mantel largo (mesa 10)",  precio: 1200, unidad: "u." },
-      { nombre: "Mantel redondo",          precio: 900,  unidad: "u." },
-      { nombre: "Camino de mesa",          precio: 600,  unidad: "u." },
-      { nombre: "Servilletas de tela",     precio: 120,  unidad: "u." },
+      { nombre: "Mantel largo (mesa 10)", precio: 2000, unidad: "u." },
+      { nombre: "Mantel redondo",         precio: 2200, unidad: "u." },
+      { nombre: "Camino de mesa",         precio: 900,  unidad: "u." },
+      { nombre: "Servilletas de tela",    precio: 200,  unidad: "u." },
+      { nombre: "Cubre silla con lazo",   precio: 600,  unidad: "u." },
     ],
   },
   {
     nombre: "Decoración",
     items: [
-      { nombre: "Candelabro plateado",     precio: 800,  unidad: "u." },
-      { nombre: "Candelabro dorado",       precio: 850,  unidad: "u." },
-      { nombre: "Jarrón de cristal",       precio: 600,  unidad: "u." },
-      { nombre: "Porta menú de cuero",     precio: 250,  unidad: "u." },
+      { nombre: "Decoración premium", precio: 150000, unidad: "evento" },
     ],
   },
 ];
@@ -67,7 +62,7 @@ export default function Alquiler() {
     const text = encodeURIComponent(
       "Hola! Me interesa consultar por alquiler de vajilla y cristalería para un evento. ¿Pueden enviarme el catálogo completo y disponibilidad?"
     );
-    window.open(`https://wa.me/5491100000000?text=${text}`, "_blank");
+    window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
   };
 
   return (

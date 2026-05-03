@@ -15,20 +15,20 @@ const fadeUp = (delay = 0) => ({
 const CONTACTOS = [
   {
     icon: Phone,
-    label: "Teléfono",
-    valor: "+54 11 0000-0000",
-    href: "tel:+541100000000",
+    label: "Teléfono / WhatsApp",
+    valor: "+54 388 403-6629",
+    href: "tel:+5493884036629",
   },
   {
     icon: Mail,
     label: "Email",
-    valor: "consultas@cateringpro.com.ar",
-    href: "mailto:consultas@cateringpro.com.ar",
+    valor: "cateringprofesionaljujuy@gmail.com",
+    href: "mailto:cateringprofesionaljujuy@gmail.com",
   },
   {
     icon: MapPin,
-    label: "Zona de cobertura",
-    valor: "Buenos Aires y GBA",
+    label: "Dirección",
+    valor: "Av. Eva Perón N° 2278 B° San Pedrito · Jujuy",
     href: null,
   },
 ];
@@ -75,7 +75,7 @@ export default function Contacto() {
       `• Tipo de evento: ${form.evento || "Sin especificar"}\n` +
       `• Mensaje: ${form.mensaje}`
     );
-    window.open(`https://wa.me/5491100000000?text=${text}`, "_blank");
+    window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
 
     setForm({ nombre: "", email: "", evento: "", mensaje: "" });
     setTimeout(() => setStatus("idle"), 5000);
@@ -111,7 +111,7 @@ export default function Contacto() {
             <div className="flex items-center gap-4 mt-2">
               <span className="h-px w-12 bg-gold/30" />
               <p className="text-white/35 text-sm tracking-wider">
-                Respondemos en menos de 24 horas
+                Jujuy · NOA · Respondemos en menos de 24 horas
               </p>
               <span className="h-px w-12 bg-gold/30" />
             </div>
@@ -173,7 +173,7 @@ export default function Contacto() {
                     </svg>
                   </a>
                   {/* Facebook */}
-                  <a href="#" aria-label="Facebook"
+                  <a href="https://www.facebook.com/cateringprofesionaljujuy" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
                     className="w-11 h-11 flex items-center justify-center border border-white/10 hover:border-gold/40 text-white/30 hover:text-gold transition-all duration-300">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -181,7 +181,7 @@ export default function Contacto() {
                   </a>
                   {/* WhatsApp */}
                   <a
-                    href="https://wa.me/5491100000000"
+                    href="https://wa.me/5493884036629"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="WhatsApp"

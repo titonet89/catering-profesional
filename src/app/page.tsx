@@ -1,11 +1,12 @@
-import Navbar       from "@/components/public/Navbar";
-import Hero         from "@/components/public/Hero";
-import Services     from "@/components/public/Services";
-import BudgetBuilder from "@/components/public/BudgetBuilder";
-import Alquiler     from "@/components/public/Alquiler";
-import Galeria      from "@/components/public/Galeria";
-import Testimonios  from "@/components/public/Testimonios";
-import Contacto     from "@/components/public/Contacto";
+import Navbar          from "@/components/public/Navbar";
+import Hero            from "@/components/public/Hero";
+import Services        from "@/components/public/Services";
+import BudgetBuilder   from "@/components/public/BudgetBuilder";
+import Alquiler        from "@/components/public/Alquiler";
+import Galeria         from "@/components/public/Galeria";
+import Testimonios     from "@/components/public/Testimonios";
+import Contacto        from "@/components/public/Contacto";
+import WhatsAppButton  from "@/components/public/WhatsAppButton";
 
 export default function HomePage() {
   return (
@@ -20,6 +21,7 @@ export default function HomePage() {
         <Testimonios />
         <Contacto />
       </main>
+      <WhatsAppButton />
     </>
   );
 }

@@ -24,37 +24,37 @@ const EVENT_TYPES = [
 
 const PACKAGES = [
   {
-    id:          "basico",
-    name:        "Básico",
-    pricePerPerson: 15000,
-    tag:         "Lo esencial",
-    color:       "border-white/10",
-    includes:    ["Sándwiches y empanadas", "Bebidas sin alcohol", "Servicio de mesa", "Vajilla básica"],
+    id:             "basico",
+    name:           "Básico",
+    pricePerPerson: 59900,
+    tag:            "Lo esencial",
+    color:          "border-white/10",
+    includes:       ["Sándwiches y empanadas", "Bebidas sin alcohol", "Servicio de mesa", "Vajilla básica"],
   },
   {
-    id:          "clasico",
-    name:        "Clásico",
-    pricePerPerson: 25000,
-    tag:         "El más elegido",
-    color:       "border-white/10",
-    includes:    ["Entrada + plato principal + postre", "Bebidas con alcohol", "Servicio de mesa completo", "Vajilla premium"],
+    id:             "clasico",
+    name:           "Clásico",
+    pricePerPerson: 79900,
+    tag:            "El más elegido",
+    color:          "border-white/10",
+    includes:       ["Entrada + plato principal + postre", "Bebidas con alcohol", "Servicio de mesa completo", "Vajilla premium"],
   },
   {
-    id:          "premium",
-    name:        "Premium",
-    pricePerPerson: 38000,
-    tag:         "Recomendado",
-    color:       "border-gold/50",
-    featured:    true,
-    includes:    ["Menú de autor 3 pasos", "Open bar completo", "Servicio de camareros", "Vajilla gourmet", "Decoración floral básica"],
+    id:             "premium",
+    name:           "Premium",
+    pricePerPerson: 99900,
+    tag:            "Recomendado",
+    color:          "border-gold/50",
+    featured:       true,
+    includes:       ["Menú de autor 3 pasos", "Open bar completo", "Servicio de camareros", "Vajilla gourmet", "Decoración floral básica"],
   },
   {
-    id:          "gala",
-    name:        "Gala",
-    pricePerPerson: 55000,
-    tag:         "La experiencia total",
-    color:       "border-white/10",
-    includes:    ["Menú 5 pasos de autor", "Open bar premium + sommelier", "Servicio white glove", "Vajilla exclusiva", "Decoración completa"],
+    id:             "gala",
+    name:           "Gala",
+    pricePerPerson: 119900,
+    tag:            "La experiencia total",
+    color:          "border-white/10",
+    includes:       ["Menú 5 pasos de autor", "Open bar premium + sommelier", "Servicio white glove", "Vajilla exclusiva", "Decoración completa"],
   },
 ];
 
@@ -65,28 +65,29 @@ const EXTRAS: {
   {
     category: "Gastronomía",
     items: [
-      { id: "entrada_extra",   label: "Entrada gourmet adicional",      perPerson: 3500  },
-      { id: "postre_especial", label: "Mesa de postres & dulces",        perPerson: 4000  },
-      { id: "parrillada",      label: "Estación de parrilla a la vista", perPerson: 5000  },
-      { id: "quesos",          label: "Tabla de quesos & fiambres",      perPerson: 2500  },
+      { id: "entrada_extra",   label: "Entrada gourmet adicional",  perPerson: 8000 },
+      { id: "mesa_dulces",     label: "Mesa de dulces & postres",   perPerson: 9000 },
+      { id: "quesos",          label: "Tabla de quesos & fiambres", perPerson: 9000 },
     ],
   },
   {
     category: "Bebidas",
     items: [
-      { id: "open_bar_premium", label: "Upgrade a open bar premium",   perPerson: 8000 },
-      { id: "barra_tematica",   label: "Barra de tragos temática",      perPerson: 5000 },
-      { id: "espumante",        label: "Brindis con espumante premium", perPerson: 2000 },
+      { id: "open_bar_premium",  label: "Upgrade open bar premium",       perPerson: 12000 },
+      { id: "barra_tematica",    label: "Barra de tragos temática",        perPerson: 9000  },
+      { id: "espumante",         label: "Brindis con espumante premium",   perPerson: 4000  },
+      { id: "barra_premium",     label: "Bebidas de barra premium",        perPerson: 9000  },
     ],
   },
   {
     category: "Servicios adicionales",
     items: [
-      { id: "sommelier",    label: "Servicio de sommelier",   perPerson: 4500 },
-      { id: "dj",           label: "DJ + equipo de sonido",   fixed: 80000    },
-      { id: "decoracion",   label: "Decoración floral premium", fixed: 60000  },
-      { id: "iluminacion",  label: "Iluminación especial",    fixed: 45000    },
-      { id: "maestro",      label: "Maestro de ceremonias",   fixed: 35000    },
+      { id: "sommelier",         label: "Servicio de sommelier",      perPerson: 4500  },
+      { id: "ilum_premium",      label: "Iluminación premium",        fixed: 250000    },
+      { id: "decoracion_floral", label: "Decoración floral premium",  fixed: 450000    },
+      { id: "iluminacion",       label: "Iluminación especial",       fixed: 150000    },
+      { id: "fotos_360",         label: "Fotos 360°",                 fixed: 150000    },
+      { id: "fotocabina",        label: "Fotocabina",                 fixed: 200000    },
     ],
   },
 ];
@@ -225,7 +226,7 @@ export default function BudgetBuilder() {
       (total ? `• Estimado: ${formatARS(total)}\n` : "") +
       `\nQuedo a la espera de más información.`
     );
-    window.open(`https://wa.me/5491100000000?text=${text}`, "_blank");
+    window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
   };
 
   return (
