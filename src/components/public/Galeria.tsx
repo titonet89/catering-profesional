@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import type { GalleryItem } from "@/lib/supabase";
 
 const CATEGORIAS = ["Todos", "Bodas", "Corporativos", "Galas", "Cumpleaños"] as const;
 type Categoria = (typeof CATEGORIAS)[number];
@@ -14,6 +16,7 @@ interface Item {
   sub: string;
   categoria: Exclude<Categoria, "Todos">;
   gradient: string;
+  imageUrl?: string;
   span?: "wide" | "tall";
 }
 
@@ -94,11 +97,39 @@ const fadeUp = (delay = 0) => ({
   transition:  { duration: 0.65, delay, ease: "easeOut" as const },
 });
 
-export default function Galeria() {
-  const [filtro, setFiltro] = useState<Categoria>("Todos");
-  const [selected, setSelected] = useState<Item | null>(null);
+function toItem(g: GalleryItem, index: number): Item {
+  const url = supabase.storage.from("galeria").getPublicUrl(g.storage_path).data.publicUrl;
+  const spansWide: number[] = [0, 5];
+  const spansTall: number[] = [2, 8];
+  return {
+    id:        index,
+    title:     g.title,
+    sub:       g.categoria,
+    categoria: g.categoria as Exclude<Categoria, "Todos">,
+    gradient:  "from-[#1a1208] via-[#100c05] to-[#080703]",
+    imageUrl:  url,
+    span:      spansWide.includes(index) ? "wide" : spansTall.includes(index) ? "tall" : undefined,
+  };
+}
 
-  const visible = filtro === "Todos" ? ITEMS : ITEMS.filter((i) => i.categoria === filtro);
+export default function Galeria() {
+  const [filtro, setFiltro]   = useState<Categoria>("Todos");
+  const [selected, setSelected] = useState<Item | null>(null);
+  const [dbItems, setDbItems] = useState<Item[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("gallery_items")
+      .select("*")
+      .eq("activo", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) setDbItems(data.map(toItem));
+      });
+  }, []);
+
+  const source  = dbItems.length > 0 ? dbItems : ITEMS;
+  const visible = filtro === "Todos" ? source : source.filter((i) => i.categoria === filtro);
 
   return (
     <section
@@ -171,15 +202,25 @@ export default function Galeria() {
                 )}
                 style={{ minHeight: item.span === "tall" ? "440px" : "220px" }}
               >
-                {/* Fondo degradado */}
-                <div className={cn("absolute inset-0 bg-gradient-to-br", item.gradient)} />
+                {/* Imagen real o degradado placeholder */}
+                {item.imageUrl ? (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className={cn("absolute inset-0 bg-gradient-to-br", item.gradient)} />
+                )}
 
-                {/* Patrón decorativo */}
-                <div className="absolute inset-0 opacity-20"
-                  style={{
-                    backgroundImage: "radial-gradient(circle at 30% 40%, rgba(201,168,76,0.15) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(201,168,76,0.08) 0%, transparent 50%)"
-                  }}
-                />
+                {/* Patrón decorativo (solo en placeholders) */}
+                {!item.imageUrl && (
+                  <div className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage: "radial-gradient(circle at 30% 40%, rgba(201,168,76,0.15) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(201,168,76,0.08) 0%, transparent 50%)"
+                    }}
+                  />
+                )}
 
                 {/* Líneas decorativas */}
                 <div className="absolute top-4 left-4 w-8 h-8 border-t border-l border-gold/20 group-hover:border-gold/50 transition-colors duration-500" />
@@ -236,15 +277,20 @@ export default function Galeria() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className={cn("relative w-full max-w-2xl overflow-hidden", "bg-gradient-to-br", selected.gradient)}
+              className="relative w-full max-w-2xl overflow-hidden"
               style={{ height: "420px" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute inset-0 opacity-30"
-                style={{
-                  backgroundImage: "radial-gradient(circle at 30% 40%, rgba(201,168,76,0.3) 0%, transparent 60%)"
-                }}
-              />
+              {selected.imageUrl ? (
+                <img src={selected.imageUrl} alt={selected.title} className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <>
+                  <div className={cn("absolute inset-0 bg-gradient-to-br", selected.gradient)} />
+                  <div className="absolute inset-0 opacity-30"
+                    style={{ backgroundImage: "radial-gradient(circle at 30% 40%, rgba(201,168,76,0.3) 0%, transparent 60%)" }}
+                  />
+                </>
+              )}
               <div className="absolute top-8 left-8 w-12 h-12 border-t border-l border-gold/30" />
               <div className="absolute bottom-8 right-8 w-12 h-12 border-b border-r border-gold/30" />
 

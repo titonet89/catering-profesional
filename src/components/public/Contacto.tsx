@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const fadeUp = (delay = 0) => ({
   initial:     { opacity: 0, y: 28 },
@@ -46,13 +47,27 @@ export default function Contacto() {
     evento: "",
     mensaje: "",
   });
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleWhatsApp = (e: React.SyntheticEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    setStatus("loading");
+
+    const { error } = await supabase
+      .from("contacto_submissions")
+      .insert([{ nombre: form.nombre, email: form.email, evento: form.evento, mensaje: form.mensaje }]);
+
+    if (error) {
+      setStatus("error");
+      return;
+    }
+
+    setStatus("ok");
+
     const text = encodeURIComponent(
       `Hola! Me comunico desde el sitio web.\n` +
       `• Nombre: ${form.nombre}\n` +
@@ -61,6 +76,9 @@ export default function Contacto() {
       `• Mensaje: ${form.mensaje}`
     );
     window.open(`https://wa.me/5491100000000?text=${text}`, "_blank");
+
+    setForm({ nombre: "", email: "", evento: "", mensaje: "" });
+    setTimeout(() => setStatus("idle"), 5000);
   };
 
   const inputClass =
@@ -179,7 +197,7 @@ export default function Contacto() {
 
             {/* Columna derecha: formulario */}
             <motion.div {...fadeUp(0.2)}>
-              <form onSubmit={handleWhatsApp} className="flex flex-col gap-4">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
                     name="nombre"
@@ -187,6 +205,7 @@ export default function Contacto() {
                     onChange={handleChange}
                     placeholder="Tu nombre"
                     required
+                    disabled={status === "loading" || status === "ok"}
                     className={inputClass}
                   />
                   <input
@@ -196,6 +215,7 @@ export default function Contacto() {
                     onChange={handleChange}
                     placeholder="Email de contacto"
                     required
+                    disabled={status === "loading" || status === "ok"}
                     className={inputClass}
                   />
                 </div>
@@ -204,6 +224,7 @@ export default function Contacto() {
                   name="evento"
                   value={form.evento}
                   onChange={handleChange}
+                  disabled={status === "loading" || status === "ok"}
                   className={inputClass + " cursor-pointer"}
                 >
                   <option value="" disabled>Tipo de evento</option>
@@ -221,20 +242,36 @@ export default function Contacto() {
                   onChange={handleChange}
                   placeholder="Contanos sobre tu evento: fecha aproximada, cantidad de personas, lugar, y cualquier detalle que quieras compartir..."
                   rows={5}
+                  disabled={status === "loading" || status === "ok"}
                   className={inputClass + " resize-none"}
                 />
 
+                {status === "ok" && (
+                  <div className="flex items-center gap-3 px-5 py-3 border border-green-500/30 bg-green-500/5 text-green-400 text-sm">
+                    <CheckCircle size={16} />
+                    Consulta guardada — te redirigimos a WhatsApp
+                  </div>
+                )}
+
+                {status === "error" && (
+                  <div className="flex items-center gap-3 px-5 py-3 border border-red-500/30 bg-red-500/5 text-red-400 text-sm">
+                    <AlertCircle size={16} />
+                    Hubo un error. Por favor intentá de nuevo.
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="group flex items-center justify-center gap-3 w-full py-4 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-all duration-300 hover:shadow-lg hover:shadow-gold/20 mt-2"
+                  disabled={status === "loading" || status === "ok"}
+                  className="group flex items-center justify-center gap-3 w-full py-4 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-all duration-300 hover:shadow-lg hover:shadow-gold/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={15} strokeWidth={2} />
-                  Enviar por WhatsApp
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                  {status === "loading" ? "Enviando..." : "Enviar por WhatsApp"}
+                  {status === "idle" && <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>}
                 </button>
 
                 <p className="text-white/20 text-[11px] text-center tracking-wide">
-                  Al enviar, serás redirigido a WhatsApp con el mensaje pre-cargado
+                  Tu consulta se guarda y se abre WhatsApp con el detalle
                 </p>
               </form>
             </motion.div>
