@@ -16,10 +16,10 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Catering Profesional | Eventos & Gastronomía de Autor",
+  title: "Catering Profesional Jujuy | Eventos & Gastronomía de Autor",
   description:
-    "Bodas de gala, eventos corporativos, quinceañeros y más. Catering premium en Buenos Aires con menús exclusivos y servicio impecable.",
-  keywords: "catering, eventos, bodas, corporativo, quinceañeros, Buenos Aires, gastronomía",
+    "Bodas, eventos corporativos, galas, cumpleaños y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
+  keywords: "catering, eventos, bodas, corporativo, quinceañeros, Jujuy, NOA, gastronomía, alquiler vajilla",
 };
 
 export default function RootLayout({

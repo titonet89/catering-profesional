@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import Image from "next/image";
 
 export default function Hero() {
   const containerRef              = useRef<HTMLDivElement>(null);
@@ -93,39 +92,19 @@ export default function Hero() {
           animate="visible"
           className="flex flex-col items-center gap-6"
         >
-          {/* Logo */}
+          {/* Logo / ícono */}
           <motion.div variants={item} className="mb-2">
-            <div className="relative w-32 h-32 sm:w-40 sm:h-40">
-              <Image
-                src="/images/logo.png"
-                alt="Catering Profesional"
-                fill
-                className="object-contain drop-shadow-2xl"
-                priority
-                onError={(e) => {
-                  /* Si no existe el logo, muestra el placeholder de texto */
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                  const fallback = e.currentTarget.nextSibling as HTMLElement;
-                  if (fallback) fallback.style.display = "flex";
-                }}
-              />
-              {/* Fallback de texto mientras no tengas el logo */}
-              <div
-                className="absolute inset-0 flex-col items-center justify-center border border-gold/40 hidden"
-                style={{ display: "flex" }}
-              >
-                <span
-                  className="text-gold text-[10px] tracking-[0.5em] uppercase font-medium"
-                >
-                  ✦
-                </span>
-                <span
-                  className="text-white text-xs tracking-[0.4em] uppercase mt-1"
-                  style={{ fontFamily: "var(--font-display, serif)" }}
-                >
-                  TU LOGO
-                </span>
-              </div>
+            <div className="w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
+              <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
+                {/* Plato */}
+                <ellipse cx="60" cy="78" rx="52" ry="15" fill="#2A1205"/>
+                <ellipse cx="60" cy="74" rx="46" ry="12" fill="#FAF0E0" fillOpacity="0.12"/>
+                <path d="M 18 78 Q 60 92 102 78" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                {/* Vapor izquierdo (marrón) */}
+                <path d="M 50 70 C 48 55 55 45 50 30 C 46 18 38 12 42 4" stroke="#7A3A10" strokeWidth="5" fill="none" strokeLinecap="round"/>
+                {/* Vapor derecho (dorado) */}
+                <path d="M 65 68 C 68 54 62 44 66 30 C 70 18 76 14 72 5" stroke="#C9A84C" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+              </svg>
             </div>
           </motion.div>
 
