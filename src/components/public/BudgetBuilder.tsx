@@ -561,7 +561,7 @@ export default function BudgetBuilder() {
                   )}
                 </AnimatePresence>
                 <p className="text-white/20 text-[10px] text-center mt-1">
-                  Precio orientativo · Sujeto a visita y disponibilidad
+                  Valor orientativo · Sujeto a consulta y disponibilidad
                 </p>
               </div>
 
@@ -582,7 +582,7 @@ export default function BudgetBuilder() {
 
               {config.package && (
                 <p className="text-white/20 text-[10px] text-center -mt-3">
-                  Te redirige a WhatsApp con el detalle completo
+                  Será redirigido a WhatsApp con el detalle de su consulta
                 </p>
               )}
             </motion.div>

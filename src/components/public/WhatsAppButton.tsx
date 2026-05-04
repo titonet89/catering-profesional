@@ -40,7 +40,7 @@ export default function WhatsAppButton() {
                 className="relative flex items-center bg-white text-charcoal text-sm font-medium px-4 py-2.5 shadow-xl shadow-black/20 mb-1"
                 style={{ borderRadius: "4px" }}
               >
-                <span>¿Hablamos por WhatsApp?</span>
+                <span>¡Buenas! ¿En qué podemos ayudarle?</span>
                 <button
                   onClick={() => setTooltip(false)}
                   className="ml-3 text-charcoal/40 hover:text-charcoal transition-colors"

@@ -205,7 +205,7 @@ export default function Contacto() {
                     name="nombre"
                     value={form.nombre}
                     onChange={handleChange}
-                    placeholder="Tu nombre"
+                    placeholder="Su nombre completo"
                     required
                     disabled={status === "loading" || status === "ok"}
                     className={inputClass}
@@ -215,7 +215,7 @@ export default function Contacto() {
                     type="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="Email de contacto"
+                    placeholder="Su correo electrónico"
                     required
                     disabled={status === "loading" || status === "ok"}
                     className={inputClass}
@@ -242,7 +242,7 @@ export default function Contacto() {
                   name="mensaje"
                   value={form.mensaje}
                   onChange={handleChange}
-                  placeholder="Contanos sobre tu evento: fecha aproximada, cantidad de personas, lugar, y cualquier detalle que quieras compartir..."
+                  placeholder="Cuéntenos sobre su evento: fecha aproximada, cantidad de invitados, lugar del evento y cualquier detalle que desee compartir..."
                   rows={5}
                   disabled={status === "loading" || status === "ok"}
                   className={inputClass + " resize-none"}
@@ -251,14 +251,14 @@ export default function Contacto() {
                 {status === "ok" && (
                   <div className="flex items-center gap-3 px-5 py-3 border border-green-500/30 bg-green-500/5 text-green-400 text-sm">
                     <CheckCircle size={16} />
-                    Consulta guardada — te redirigimos a WhatsApp
+                    ¡Muchas gracias por comunicarse! Su consulta fue recibida. Lo redirigimos a WhatsApp.
                   </div>
                 )}
 
                 {status === "error" && (
                   <div className="flex items-center gap-3 px-5 py-3 border border-red-500/30 bg-red-500/5 text-red-400 text-sm">
                     <AlertCircle size={16} />
-                    Hubo un error. Por favor intentá de nuevo.
+                    Disculpe el inconveniente. Por favor intente nuevamente o contáctenos directamente.
                   </div>
                 )}
 
@@ -268,12 +268,12 @@ export default function Contacto() {
                   className="group flex items-center justify-center gap-3 w-full py-4 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-all duration-300 hover:shadow-lg hover:shadow-gold/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={15} strokeWidth={2} />
-                  {status === "loading" ? "Enviando..." : "Enviar por WhatsApp"}
+                  {status === "loading" ? "Enviando consulta..." : "Enviar por WhatsApp"}
                   {status === "idle" && <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>}
                 </button>
 
                 <p className="text-white/20 text-[11px] text-center tracking-wide">
-                  Tu consulta se guarda y se abre WhatsApp con el detalle
+                  Su consulta quedará registrada y será contactado a la brevedad
                 </p>
               </form>
             </motion.div>
