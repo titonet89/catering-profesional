@@ -218,13 +218,13 @@ export default function BudgetBuilder() {
       EXTRAS.flatMap((g) => g.items.filter((e) => e.id === id).map((e) => e.label))
     );
     const text = encodeURIComponent(
-      `Hola! Me interesa solicitar un presupuesto:\n` +
-      `• Evento: ${event?.label ?? "Sin especificar"}\n` +
-      `• Invitados: ${config.guests}\n` +
-      `• Paquete: ${pkg?.name ?? "Sin seleccionar"}\n` +
-      (extraNames.length ? `• Extras: ${extraNames.join(", ")}\n` : "") +
-      (total ? `• Estimado: ${formatARS(total)}\n` : "") +
-      `\nQuedo a la espera de más información.`
+      `Buenas tardes. Me comunico desde su sitio web con el siguiente presupuesto orientativo elaborado en su calculador:\n\n` +
+      `• Tipo de evento: ${event?.label ?? "Sin especificar"}\n` +
+      `• Cantidad de invitados: ${config.guests} personas\n` +
+      `• Paquete seleccionado: ${pkg?.name ?? "Sin seleccionar"}\n` +
+      (extraNames.length ? `• Servicios adicionales: ${extraNames.join(", ")}\n` : "") +
+      (total ? `• Total estimado: ${formatARS(total)}\n` : "") +
+      `\nQuedo a su disposición para coordinar una consulta y confirmar disponibilidad. Muchas gracias.`
     );
     window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
   };

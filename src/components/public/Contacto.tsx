@@ -70,11 +70,12 @@ export default function Contacto() {
     setStatus("ok");
 
     const text = encodeURIComponent(
-      `Hola! Me comunico desde el sitio web.\n` +
+      `Buenas tardes. Me comunico a través del formulario de contacto de su sitio web con el siguiente detalle:\n\n` +
       `• Nombre: ${form.nombre}\n` +
       `• Email: ${form.email}\n` +
       `• Tipo de evento: ${form.evento || "Sin especificar"}\n` +
-      `• Mensaje: ${form.mensaje}`
+      `• Mensaje: ${form.mensaje}\n\n` +
+      `Quedo a la espera de su respuesta. Muchas gracias.`
     );
     window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
 
@@ -328,7 +329,7 @@ export default function Contacto() {
 
           <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
             <p className="text-white/10 text-[10px] tracking-[0.3em] uppercase">
-              Buenos Aires · Argentina
+              Jujuy · NOA · Argentina
             </p>
           </div>
         </div>

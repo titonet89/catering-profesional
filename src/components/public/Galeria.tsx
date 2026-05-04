@@ -251,7 +251,9 @@ export default function Galeria() {
         <motion.div {...fadeUp(0.2)} className="flex justify-center mt-14">
           <button
             onClick={() => {
-              const text = encodeURIComponent("Hola! Vi su galería y me gustaría consultar sobre catering para mi evento.");
+              const text = encodeURIComponent(
+                "Buenas tardes. He visto su galería de eventos en el sitio web y me gustaría consultar sobre la disponibilidad de sus servicios de catering para un próximo evento. Quedo a la espera de su respuesta. Muchas gracias."
+              );
               window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
             }}
             className="group flex items-center gap-3 px-10 py-4 border border-gold/40 text-white/70 hover:text-white hover:border-gold text-xs tracking-[0.4em] uppercase transition-all duration-500"

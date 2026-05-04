@@ -60,7 +60,7 @@ const fadeUp = (delay = 0) => ({
 export default function Alquiler() {
   const handleConsulta = () => {
     const text = encodeURIComponent(
-      "Hola! Me interesa consultar por alquiler de vajilla y cristalería para un evento. ¿Pueden enviarme el catálogo completo y disponibilidad?"
+      "Buenas tardes. Me comunico desde su sitio web con interés en el servicio de alquiler de vajilla y cristalería para un evento. ¿Podrían informarme disponibilidad, condiciones y posibilidad de coordinar una visita? Muchas gracias."
     );
     window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
   };

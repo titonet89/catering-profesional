@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
 const WA_NUMBER = "5493884036629";
-const WA_TEXT   = encodeURIComponent("Hola! Me comunico desde el sitio web de Catering Profesional. Quisiera consultar sobre un evento.");
+const WA_TEXT   = encodeURIComponent(
+  "Buenas tardes. Me comunico a través de su sitio web y me gustaría obtener información sobre sus servicios de catering. Quedo a la espera de su respuesta. Muchas gracias."
+);
 
 export default function WhatsAppButton() {
   const [visible,  setVisible]  = useState(false);
