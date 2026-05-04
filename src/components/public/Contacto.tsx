@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const fadeUp = (delay = 0) => ({
   initial:     { opacity: 0, y: 28 },
@@ -57,11 +56,13 @@ export default function Contacto() {
     e.preventDefault();
     setStatus("loading");
 
-    const { error } = await supabase
-      .from("contacto_submissions")
-      .insert([{ nombre: form.nombre, email: form.email, evento: form.evento, mensaje: form.mensaje }]);
+    const res = await fetch("/api/contact", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(form),
+    });
 
-    if (error) {
+    if (!res.ok) {
       setStatus("error");
       return;
     }
