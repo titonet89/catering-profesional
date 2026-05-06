@@ -327,10 +327,24 @@ export default function Contacto() {
             </p>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-white/10 text-[10px] tracking-[0.3em] uppercase">
               Jujuy · NOA · Argentina
             </p>
+            <a
+              href="http://qr.afip.gob.ar/?qr=V5rn39ln7Fw-TNLzgOZd6g,,"
+              target="_F960AFIPInfo"
+              rel="noopener noreferrer"
+              title="Datos Fiscales - AFIP"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="http://www.afip.gob.ar/images/f960/DATAWEB.jpg"
+                alt="Data Fiscal AFIP"
+                style={{ height: "40px", width: "auto", opacity: 0.7 }}
+                className="hover:opacity-100 transition-opacity duration-300"
+              />
+            </a>
           </div>
         </div>
       </footer>
