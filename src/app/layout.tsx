@@ -20,6 +20,22 @@ export const metadata: Metadata = {
   description:
     "Bodas, eventos corporativos, galas, cumpleaños y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
   keywords: "catering, eventos, bodas, corporativo, quinceañeros, Jujuy, NOA, gastronomía, alquiler vajilla",
+  metadataBase: new URL("https://catering-profesional.vercel.app"),
+  openGraph: {
+    title: "Catering Profesional Jujuy | Eventos & Gastronomía de Autor",
+    description:
+      "Bodas, eventos corporativos, galas y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
+    url: "https://catering-profesional.vercel.app",
+    siteName: "Catering Profesional Jujuy",
+    locale: "es_AR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Catering Profesional Jujuy | Eventos & Gastronomía de Autor",
+    description:
+      "Bodas, eventos corporativos, galas y más. Catering premium en Jujuy y el NOA.",
+  },
 };
 
 export default function RootLayout({

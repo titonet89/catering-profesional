@@ -163,6 +163,20 @@ export default function Contacto() {
                 </div>
               </div>
 
+              {/* Mapa */}
+              <div className="border border-white/6 overflow-hidden" style={{ height: "200px" }}>
+                <iframe
+                  title="Ubicación Catering Profesional"
+                  src="https://maps.google.com/maps?q=Av+Eva+Perón+2278+San+Salvador+de+Jujuy+Argentina&output=embed&z=15"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, filter: "grayscale(1) invert(0.9) contrast(0.85)" }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+
               {/* Redes */}
               <div className="flex flex-col gap-4">
                 <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase">Seguinos</p>
