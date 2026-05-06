@@ -17,7 +17,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [scrolled,     setScrolled]     = useState(false);
   const [menuOpen,     setMenuOpen]     = useState(false);
-  const [activeSection, setActiveSection] = useState("inicio");
+  const [activeSection] = useState("inicio");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -61,7 +61,7 @@ export default function Navbar() {
             <img
               src="/logo.png"
               alt="Catering Profesional"
-              className="w-10 h-10 object-contain shrink-0 transition-opacity group-hover:opacity-80"
+              className="h-14 w-auto object-contain shrink-0 transition-opacity group-hover:opacity-80"
             />
             <div className="flex flex-col leading-none">
               <span className="text-[11px] tracking-[0.35em] text-gold uppercase font-sans font-medium transition-opacity group-hover:opacity-80">
