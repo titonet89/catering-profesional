@@ -29,7 +29,7 @@ export default function WhatsAppButton() {
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
           className="fixed bottom-6 right-6 z-50 flex items-end gap-3"
         >
-          {/* Tooltip */}
+          {/* Globo de texto — desaparece solo a los 15 segundos */}
           <AnimatePresence>
             {tooltip && (
               <motion.div

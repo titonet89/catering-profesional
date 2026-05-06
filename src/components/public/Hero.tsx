@@ -126,7 +126,7 @@ export default function Hero() {
             </span>
           </motion.h1>
 
-          {/* Tagline */}
+          {/* Subtítulo — tipos de eventos */}
           <motion.p
             variants={item}
             className="text-white/50 text-xs sm:text-sm tracking-[0.4em] uppercase"
@@ -134,7 +134,7 @@ export default function Hero() {
             Bodas&nbsp;&nbsp;·&nbsp;&nbsp;Corporativos&nbsp;&nbsp;·&nbsp;&nbsp;Galas&nbsp;&nbsp;·&nbsp;&nbsp;Cumpleaños
           </motion.p>
 
-          {/* CTA */}
+          {/* Botón principal */}
           <motion.div variants={item} className="mt-4">
             <button
               onClick={() => {
@@ -143,7 +143,7 @@ export default function Hero() {
               className="group relative px-10 py-3.5 border border-gold/60 text-white text-xs tracking-[0.35em] uppercase hover:bg-gold/10 transition-all duration-500 overflow-hidden"
             >
               <span className="relative z-10">Descubrí nuestros servicios</span>
-              {/* Shimmer al hover */}
+              {/* Efecto brillo al pasar el mouse */}
               <span
                 className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-gold/10 to-transparent transition-transform duration-700"
               />
@@ -152,7 +152,7 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* ── Scroll indicator ── */}
+      {/* ── Flecha animada para bajar ── */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
         <button
           onClick={scrollDown}

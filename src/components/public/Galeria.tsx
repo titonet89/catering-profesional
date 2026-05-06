@@ -180,7 +180,7 @@ export default function Galeria() {
           ))}
         </motion.div>
 
-        {/* Grid masonry */}
+        {/* Grilla de fotos */}
         <motion.div
           layout
           className="grid grid-cols-2 md:grid-cols-3 gap-3"
@@ -226,7 +226,7 @@ export default function Galeria() {
                 <div className="absolute top-4 left-4 w-8 h-8 border-t border-l border-gold/20 group-hover:border-gold/50 transition-colors duration-500" />
                 <div className="absolute bottom-4 right-4 w-8 h-8 border-b border-r border-gold/20 group-hover:border-gold/50 transition-colors duration-500" />
 
-                {/* Overlay hover */}
+                {/* Capa dorada al pasar el mouse */}
                 <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 {/* Tag de categoría */}
@@ -247,7 +247,7 @@ export default function Galeria() {
           </AnimatePresence>
         </motion.div>
 
-        {/* CTA */}
+        {/* Botón de contacto */}
         <motion.div {...fadeUp(0.2)} className="flex justify-center mt-14">
           <button
             onClick={() => {
@@ -264,7 +264,7 @@ export default function Galeria() {
         </motion.div>
       </div>
 
-      {/* Lightbox */}
+      {/* Visor ampliado al hacer clic en una foto */}
       <AnimatePresence>
         {selected && (
           <motion.div
