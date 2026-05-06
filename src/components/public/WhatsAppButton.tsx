@@ -15,7 +15,7 @@ export default function WhatsAppButton() {
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 1500);
-    const t2 = setTimeout(() => setTooltip(false), 6000);
+    const t2 = setTimeout(() => setTooltip(false), 15000);
     return () => { clearTimeout(t); clearTimeout(t2); };
   }, []);
 

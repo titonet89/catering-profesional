@@ -341,7 +341,7 @@ export default function Contacto() {
               <img
                 src="http://www.afip.gob.ar/images/f960/DATAWEB.jpg"
                 alt="Data Fiscal AFIP"
-                style={{ height: "60px", width: "auto" }}
+                style={{ height: "80px", width: "auto" }}
                 className="opacity-80 hover:opacity-100 transition-opacity duration-300"
               />
             </a>

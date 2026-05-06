@@ -6,35 +6,59 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const TESTIMONIOS = [
   {
-    nombre: "María González",
-    evento: "Boda · Diciembre 2024",
+    nombre: "Claudia Mamani",
+    evento: "Casamiento · Marzo 2024",
     texto:
-      "Superaron todas nuestras expectativas. Desde la primera reunión entendieron exactamente lo que queríamos para nuestra boda. El servicio fue impecable, la comida espectacular y cada detalle estuvo pensado con mucho cuidado. Todos nuestros invitados siguieron hablando de la cena semanas después.",
-    iniciales: "MG",
+      "La verdad que quedé re contra contenta!! Mis suegros no creían que iba a salir tan bien jaja y al final todos terminaron felices. La comida estuvo buenísima, el personal muy amable con todos los invitados. Gracias por hacer tan especial el día de Rodrigo y mío ❤️",
+    iniciales: "CM",
     estrellas: 5,
   },
   {
-    nombre: "Lucas Martínez",
-    evento: "Evento Corporativo · Noviembre 2024",
+    nombre: "Roberto Alvarado",
+    evento: "Cena de empresa · Octubre 2024",
     texto:
-      "Organizamos la cena anual de la empresa con 180 personas y el resultado fue extraordinario. Profesionalismo absoluto, puntualidad, y una propuesta gastronómica que elevó la imagen de nuestra compañía. Definitivamente los volvemos a contratar el año que viene.",
-    iniciales: "LM",
+      "Los contratamos para el cierre de año, unas 60 personas. Todo muy prolijo, llegaron puntual y lo que más me sorprendió fue la atención al detalle. Varios compañeros me preguntaron quién había organizado la comida. Los recomiendo sin dudarlo.",
+    iniciales: "RA",
     estrellas: 5,
   },
   {
-    nombre: "Valentina Ríos",
-    evento: "Festejo de 15 · Octubre 2024",
+    nombre: "Griselda Torino",
+    evento: "15 años de Sofía · Agosto 2024",
     texto:
-      "Buscaba algo diferente para los 15 de mi hija y lo encontré. La decoración de mesa, el menú personalizado con sus sabores favoritos, y el trato con cada uno de los invitados fueron simplemente perfectos. Un recuerdo que va a durar toda la vida.",
-    iniciales: "VR",
+      "Organicé los 15 de mi hija con ellos y fue una de las mejores decisiones que tomé. Muy atentos desde el primer momento, me ayudaron con el menú porque yo no sabía bien qué pedir. Todo el salón quedó divino y los chicos del servicio re bien. Gracias totales!",
+    iniciales: "GT",
     estrellas: 5,
   },
   {
-    nombre: "Martín Pereyra",
-    evento: "Gala Benéfica · Septiembre 2024",
+    nombre: "Diego Colque",
+    evento: "Cumpleaños de 50 · Julio 2024",
     texto:
-      "Trabajamos con ellos para una gala solidaria de alto perfil. La coordinación fue excelente, los tiempos impecables y la presentación de los platos a la altura de los mejores restaurantes de Buenos Aires. Muchos asistentes preguntaron por su contacto.",
-    iniciales: "MP",
+      "Mi señora me organizó una sorpresa para mis 50 con ellos. Cuando llegué y vi todo me emocioné de verdad. La comida abundante y rica, las bebidas muy bien surtidas. Los 80 invitados se fueron contentos y varios me pidieron el contacto.",
+    iniciales: "DC",
+    estrellas: 5,
+  },
+  {
+    nombre: "Lic. Fernanda Sajama",
+    evento: "Acto institucional · Mayo 2024",
+    texto:
+      "Contratamos el servicio para un acto oficial del municipio. Cumplieron en tiempo y forma con todo lo acordado, los mozos muy presentables y correctos. Para eventos del sector público donde la imagen importa, son una opción muy confiable.",
+    iniciales: "FS",
+    estrellas: 5,
+  },
+  {
+    nombre: "Analía Flores",
+    evento: "Boda · Noviembre 2024",
+    texto:
+      "Desde la primera reunión nos sentimos muy cómodos. Nos dieron varias opciones de menú según nuestro presupuesto y nunca nos presionaron. El día del evento todo salió 10 puntos. Las fotos quedaron hermosas también gracias a cómo estaban puestas las mesas.",
+    iniciales: "AF",
+    estrellas: 5,
+  },
+  {
+    nombre: "Carlos Pérez Quiroga",
+    evento: "Gala solidaria · Junio 2024",
+    texto:
+      "Organizamos una cena benéfica y necesitábamos que todo saliera perfecto. Se portaron increíble, muy profesionales pero sin perder el trato humano. Varios de los presentes ya me consultaron el contacto para sus propios eventos. Se los recomiendo a ojos cerrados.",
+    iniciales: "CP",
     estrellas: 5,
   },
 ];
