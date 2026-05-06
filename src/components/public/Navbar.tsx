@@ -55,19 +55,25 @@ export default function Navbar() {
           <a
             href="#inicio"
             onClick={(e) => { e.preventDefault(); handleNavClick("#inicio"); }}
-            className="flex flex-col leading-none group"
+            className="flex items-center gap-3 group"
           >
-            <span
-              className="text-[11px] tracking-[0.35em] text-gold uppercase font-sans font-medium transition-opacity group-hover:opacity-80"
-            >
-              ✦ Eventos &amp; Gastronomía ✦
-            </span>
-            <span
-              className="text-white text-xl tracking-[0.15em] uppercase font-display font-bold"
-              style={{ fontFamily: "var(--font-display, serif)" }}
-            >
-              Catering Profesional
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="Catering Profesional"
+              className="w-10 h-10 object-contain shrink-0 transition-opacity group-hover:opacity-80"
+            />
+            <div className="flex flex-col leading-none">
+              <span className="text-[11px] tracking-[0.35em] text-gold uppercase font-sans font-medium transition-opacity group-hover:opacity-80">
+                ✦ Eventos &amp; Gastronomía ✦
+              </span>
+              <span
+                className="text-white text-xl tracking-[0.15em] uppercase font-display font-bold"
+                style={{ fontFamily: "var(--font-display, serif)" }}
+              >
+                Catering Profesional
+              </span>
+            </div>
           </a>
 
           {/* Nav Desktop */}

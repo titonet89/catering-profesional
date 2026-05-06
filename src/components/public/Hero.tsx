@@ -92,20 +92,14 @@ export default function Hero() {
           animate="visible"
           className="flex flex-col items-center gap-6"
         >
-          {/* Logo / ícono */}
+          {/* Logo */}
           <motion.div variants={item} className="mb-2">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
-              <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
-                {/* Plato */}
-                <ellipse cx="60" cy="78" rx="52" ry="15" fill="#2A1205"/>
-                <ellipse cx="60" cy="74" rx="46" ry="12" fill="#FAF0E0" fillOpacity="0.12"/>
-                <path d="M 18 78 Q 60 92 102 78" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                {/* Vapor izquierdo (marrón) */}
-                <path d="M 50 70 C 48 55 55 45 50 30 C 46 18 38 12 42 4" stroke="#7A3A10" strokeWidth="5" fill="none" strokeLinecap="round"/>
-                {/* Vapor derecho (dorado) */}
-                <path d="M 65 68 C 68 54 62 44 66 30 C 70 18 76 14 72 5" stroke="#C9A84C" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-              </svg>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="Catering Profesional"
+              className="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-2xl"
+            />
           </motion.div>
 
           {/* Línea decorativa */}
