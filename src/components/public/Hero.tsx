@@ -109,7 +109,7 @@ export default function Hero() {
           >
             <span className="flex-1 h-px bg-gold/40" />
             <span className="text-gold text-[10px] tracking-[0.5em] uppercase">
-              est. 2016
+              est. 2012
             </span>
             <span className="flex-1 h-px bg-gold/40" />
           </motion.div>
