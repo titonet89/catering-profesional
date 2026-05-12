@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Printer, Plus, Minus, Send } from "lucide-react";
+import { Phone, Printer, Plus, Minus, Send, User, Mail, PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CATEGORIAS = [
@@ -50,6 +50,12 @@ const CATEGORIAS = [
   },
 ];
 
+interface Solicitante {
+  nombre: string;
+  email: string;
+  tel: string;
+}
+
 type Cantidades = Record<string, number>;
 
 const formatARS = (n: number) => "$ " + n.toLocaleString("es-AR");
@@ -69,7 +75,21 @@ function calcTotal(cantidades: Cantidades) {
   }, 0);
 }
 
-function generarCotizacion(cantidades: Cantidades) {
+function nroCotizacion() {
+  const now = new Date();
+  const yy  = String(now.getFullYear()).slice(2);
+  const mm  = String(now.getMonth() + 1).padStart(2, "0");
+  const seq = String(now.getMinutes() * 60 + now.getSeconds()).padStart(4, "0");
+  return `CP-${yy}${mm}-${seq}`;
+}
+
+function fechaVencimiento() {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function generarCotizacion(cantidades: Cantidades, solicitante: Solicitante) {
   const seleccionados = Object.entries(cantidades)
     .filter(([, qty]) => qty > 0)
     .map(([id, qty]) => {
@@ -79,99 +99,201 @@ function generarCotizacion(cantidades: Cantidades) {
 
   if (seleccionados.length === 0) return;
 
-  const total = seleccionados.reduce((s, i) => s + i.subtotal, 0);
-  const fecha = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
+  const total  = seleccionados.reduce((s, i) => s + i.subtotal, 0);
+  const fecha  = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
+  const nro    = nroCotizacion();
+  const vence  = fechaVencimiento();
 
-  const rows = seleccionados
-    .map(
-      (i) => `<tr>
-        <td style="padding:10px 14px;border-bottom:1px solid #eee;color:#1a1a1a">${i.nombre}</td>
-        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;color:#555">${i.qty} ${i.unidad}</td>
-        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;color:#555">${formatARS(i.precio)}</td>
-        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-weight:600;color:#1a1a1a">${formatARS(i.subtotal)}</td>
-      </tr>`
-    )
-    .join("");
+  const rows = seleccionados.map((i) => `
+    <tr>
+      <td class="td-nombre">${i.nombre}</td>
+      <td class="td-center">${i.qty}</td>
+      <td class="td-center">${i.unidad}</td>
+      <td class="td-right">${formatARS(i.precio)}</td>
+      <td class="td-right td-sub">${formatARS(i.subtotal)}</td>
+    </tr>`).join("");
+
+  const clienteHtml = solicitante.nombre ? `
+    <div class="cliente-box">
+      <p class="label-small">Cotización preparada para</p>
+      <p class="cliente-nombre">${solicitante.nombre}</p>
+      ${solicitante.email ? `<p class="cliente-dato">✉ ${solicitante.email}</p>` : ""}
+      ${solicitante.tel   ? `<p class="cliente-dato">☎ ${solicitante.tel}</p>`   : ""}
+    </div>` : "";
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Cotización — Catering Profesional</title>
+  <title>Cotización ${nro} — Catering Profesional</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Georgia,'Times New Roman',serif;color:#1a1a1a;background:#fff;padding:40px;max-width:780px;margin:0 auto}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:24px;border-bottom:2px solid #c9a84c;margin-bottom:32px}
-    .brand-name{font-size:22px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-    .brand-sub{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#c9a84c;margin-top:4px}
-    .brand-info{font-size:11px;color:#666;line-height:1.8;margin-top:8px}
-    .doc-title{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#c9a84c;text-align:right}
-    .doc-date{font-size:12px;color:#666;text-align:right;margin-top:6px}
-    table{width:100%;border-collapse:collapse;margin-bottom:24px}
-    thead tr{background:#f9f6ef}
-    thead th{padding:10px 14px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:#c9a84c;font-weight:600;border-bottom:1px solid #e8dfc4;text-align:left}
-    .total-row td{padding:14px;border-top:2px solid #c9a84c}
-    .total-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#666}
-    .total-value{text-align:right;font-size:20px;font-weight:700;color:#c9a84c}
-    .footer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:flex-end}
-    .disclaimer{font-size:10px;color:#999;line-height:1.7;max-width:420px}
-    .contact{text-align:right;font-size:11px;color:#666;line-height:1.8}
-    @media print{body{padding:20px}}
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+    *  { margin:0; padding:0; box-sizing:border-box }
+    body { font-family:'Inter', Arial, sans-serif; font-size:13px; color:#1a1a1a;
+           background:#fff; padding:48px 56px; max-width:820px; margin:0 auto }
+
+    /* ── HEADER ── */
+    .header { display:flex; justify-content:space-between; align-items:flex-start;
+              margin-bottom:36px; padding-bottom:28px;
+              border-bottom:3px solid #c9a84c }
+    .brand  { display:flex; flex-direction:column; gap:2px }
+    .brand-name { font-family:'Playfair Display', Georgia, serif;
+                  font-size:26px; font-weight:700; letter-spacing:.06em;
+                  text-transform:uppercase; color:#0f0f0f }
+    .brand-tag  { font-size:10px; letter-spacing:.45em; text-transform:uppercase;
+                  color:#c9a84c; margin-top:2px }
+    .brand-info { font-size:11px; color:#777; line-height:1.85; margin-top:10px }
+    .doc-meta   { text-align:right; display:flex; flex-direction:column; gap:4px }
+    .doc-tipo   { font-family:'Playfair Display', serif; font-size:18px;
+                  font-weight:700; color:#c9a84c; letter-spacing:.05em }
+    .doc-nro    { font-size:11px; color:#555; letter-spacing:.1em }
+    .doc-fecha  { font-size:11px; color:#777 }
+
+    /* ── PARA ── */
+    .cliente-box  { background:#faf8f4; border:1px solid #e8dfc4; border-left:4px solid #c9a84c;
+                    padding:14px 18px; margin-bottom:28px; border-radius:2px }
+    .label-small  { font-size:9px; letter-spacing:.35em; text-transform:uppercase;
+                    color:#c9a84c; margin-bottom:6px }
+    .cliente-nombre { font-family:'Playfair Display', serif; font-size:16px;
+                      font-weight:700; color:#0f0f0f; margin-bottom:4px }
+    .cliente-dato   { font-size:11px; color:#666; line-height:1.7 }
+
+    /* ── TABLA ── */
+    table { width:100%; border-collapse:collapse; margin-bottom:0 }
+    thead tr { background:#0f0f0f }
+    thead th { padding:10px 14px; font-size:9px; letter-spacing:.35em;
+               text-transform:uppercase; color:#c9a84c; font-weight:600;
+               text-align:left }
+    thead th.th-right { text-align:right }
+    thead th.th-center { text-align:center }
+    tbody tr { border-bottom:1px solid #f0ece4 }
+    tbody tr:hover { background:#fdfbf8 }
+    .td-nombre  { padding:11px 14px; color:#1a1a1a; font-weight:500 }
+    .td-center  { padding:11px 14px; text-align:center; color:#666 }
+    .td-right   { padding:11px 14px; text-align:right; color:#666 }
+    .td-sub     { font-weight:600; color:#1a1a1a }
+
+    /* ── TOTAL ── */
+    .total-wrapper { background:#0f0f0f; padding:18px 14px;
+                     display:flex; justify-content:space-between; align-items:center }
+    .total-label { font-size:10px; letter-spacing:.4em; text-transform:uppercase; color:#c9a84c }
+    .total-value { font-family:'Playfair Display', serif; font-size:28px;
+                   font-weight:700; color:#c9a84c }
+
+    /* ── INFO EXTRA ── */
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:28px }
+    .info-box  { background:#faf8f4; border:1px solid #eee8d8; padding:14px 16px;
+                 border-radius:2px }
+    .info-title { font-size:9px; letter-spacing:.35em; text-transform:uppercase;
+                  color:#c9a84c; margin-bottom:8px }
+    .info-text  { font-size:11px; color:#666; line-height:1.75 }
+
+    /* ── FOOTER ── */
+    .footer { margin-top:36px; padding-top:18px; border-top:1px solid #e8dfc4;
+              display:flex; justify-content:space-between; align-items:flex-end }
+    .footer-disclaimer { font-size:10px; color:#aaa; line-height:1.7; max-width:400px }
+    .footer-contact    { text-align:right; font-size:11px; color:#777; line-height:1.85 }
+    .footer-brand      { font-family:'Playfair Display', serif; font-weight:700;
+                         font-size:13px; color:#0f0f0f; letter-spacing:.05em;
+                         text-transform:uppercase; display:block; margin-bottom:4px }
+
+    @media print {
+      body { padding:28px 36px }
+      tbody tr:hover { background:transparent }
+    }
   </style>
 </head>
 <body>
+
+  <!-- HEADER -->
   <div class="header">
-    <div>
+    <div class="brand">
       <div class="brand-name">Catering Profesional</div>
-      <div class="brand-sub">Jujuy · NOA</div>
+      <div class="brand-tag">Jujuy · Noroeste Argentino</div>
       <div class="brand-info">
-        Av. Eva Perón N° 2278, B° San Pedrito — Jujuy<br>
+        Av. Eva Perón N° 2278, B° San Pedrito<br>
+        San Salvador de Jujuy, Jujuy · Argentina<br>
         +54 388 403-6629 · cateringprofesionaljujuy@gmail.com
       </div>
     </div>
-    <div>
-      <div class="doc-title">Cotización preliminar</div>
-      <div class="doc-date">Fecha: ${fecha}</div>
+    <div class="doc-meta">
+      <div class="doc-tipo">Cotización</div>
+      <div class="doc-nro">N° ${nro}</div>
+      <div class="doc-fecha">Fecha: ${fecha}</div>
+      <div class="doc-fecha" style="margin-top:4px;color:#c9a84c">Válida hasta: ${vence}</div>
     </div>
   </div>
+
+  <!-- DATOS DEL SOLICITANTE -->
+  ${clienteHtml}
+
+  <!-- TABLA -->
   <table>
     <thead>
       <tr>
-        <th>Artículo</th>
-        <th style="text-align:center">Cantidad</th>
-        <th style="text-align:right">Precio unit.</th>
-        <th style="text-align:right">Subtotal</th>
+        <th style="width:42%">Artículo</th>
+        <th class="th-center" style="width:10%">Cant.</th>
+        <th class="th-center" style="width:10%">Unidad</th>
+        <th class="th-right"  style="width:19%">Precio unit.</th>
+        <th class="th-right"  style="width:19%">Subtotal</th>
       </tr>
     </thead>
-    <tbody>
-      ${rows}
-      <tr class="total-row">
-        <td colspan="3" class="total-label">Total estimado</td>
-        <td class="total-value">${formatARS(total)}</td>
-      </tr>
-    </tbody>
+    <tbody>${rows}</tbody>
   </table>
-  <div class="footer">
-    <div class="disclaimer">
-      Cotización orientativa. Los precios están sujetos a disponibilidad y pueden variar.<br>
-      Se requiere depósito de garantía y mínimo de contratación. Válido por 7 días.<br>
-      Para confirmar, comunicarse con nosotros a través de los datos de contacto.
+
+  <!-- TOTAL -->
+  <div class="total-wrapper">
+    <span class="total-label">Total estimado</span>
+    <span class="total-value">${formatARS(total)}</span>
+  </div>
+
+  <!-- INFO ADICIONAL -->
+  <div class="info-grid">
+    <div class="info-box">
+      <div class="info-title">Condiciones</div>
+      <div class="info-text">
+        · Se requiere depósito de garantía<br>
+        · Mínimo de contratación aplicable<br>
+        · Entrega y retiro del equipamiento incluidos<br>
+        · Sujeto a disponibilidad de fecha y stock
+      </div>
     </div>
-    <div class="contact">
-      <strong style="letter-spacing:.1em;text-transform:uppercase">Catering Profesional</strong><br>
-      +54 388 403-6629<br>
-      cateringprofesionaljujuy@gmail.com
+    <div class="info-box">
+      <div class="info-title">Para confirmar</div>
+      <div class="info-text">
+        · Responder por WhatsApp o email<br>
+        · Indicar fecha y lugar del evento<br>
+        · Se emitirá presupuesto formal definitivo<br>
+        · Cotización válida por 7 días
+      </div>
     </div>
   </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-disclaimer">
+      Los precios son orientativos y están expresados en pesos argentinos (ARS).<br>
+      Sujetos a modificación sin previo aviso. El presente documento no constituye<br>
+      una factura ni un contrato de servicios.
+    </div>
+    <div class="footer-contact">
+      <span class="footer-brand">Catering Profesional</span>
+      +54 388 403-6629<br>
+      cateringprofesionaljujuy@gmail.com<br>
+      <span style="font-size:10px;color:#aaa">CUIT 27-34061402-5</span>
+    </div>
+  </div>
+
 </body>
 </html>`;
 
-  const win = window.open("", "_blank", "width=820,height=700");
+  const win = window.open("", "_blank", "width=880,height=760");
   if (!win) return;
   win.document.write(html);
   win.document.close();
   win.focus();
-  setTimeout(() => { win.print(); }, 400);
+  setTimeout(() => { win.print(); }, 600);
 }
 
 const fadeUp = (delay = 0) => ({
@@ -181,8 +303,11 @@ const fadeUp = (delay = 0) => ({
   transition:  { duration: 0.65, delay, ease: "easeOut" as const },
 });
 
+const inputClass = "w-full bg-transparent border border-white/8 px-3 py-2.5 text-white/70 text-xs placeholder:text-white/20 focus:outline-none focus:border-gold/40 transition-colors duration-300";
+
 export default function Alquiler() {
-  const [cantidades, setCantidades] = useState<Cantidades>({});
+  const [cantidades, setCantidades]   = useState<Cantidades>({});
+  const [solicitante, setSolicitante] = useState<Solicitante>({ nombre: "", email: "", tel: "" });
 
   const add = (id: string) =>
     setCantidades((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
@@ -190,11 +315,7 @@ export default function Alquiler() {
   const remove = (id: string) =>
     setCantidades((c) => {
       const v = (c[id] ?? 0) - 1;
-      if (v <= 0) {
-        const next = { ...c };
-        delete next[id];
-        return next;
-      }
+      if (v <= 0) { const next = { ...c }; delete next[id]; return next; }
       return { ...c, [id]: v };
     });
 
@@ -209,8 +330,9 @@ export default function Alquiler() {
         return `  • ${item.nombre}: ${qty} ${item.unidad} — ${formatARS(item.precio * qty)}`;
       })
       .join("\n");
+    const quien = solicitante.nombre ? `\n• Solicitante: ${solicitante.nombre}` : "";
     const text = encodeURIComponent(
-      `Buenas tardes. Me comunico desde su sitio web con interés en el alquiler de los siguientes artículos:\n\n${lineas}\n\n• Total estimado: ${formatARS(total)}\n\nQuedo a su disposición para coordinar disponibilidad y condiciones. Muchas gracias.`
+      `Buenas tardes. Me comunico desde su sitio web con interés en el alquiler de los siguientes artículos:\n\n${lineas}\n\n• Total estimado: ${formatARS(total)}${quien}\n\nQuedo a su disposición para coordinar disponibilidad y condiciones. Muchas gracias.`
     );
     window.open(`https://wa.me/5493884036629?text=${text}`, "_blank");
   };
@@ -249,7 +371,7 @@ export default function Alquiler() {
         {/* Layout: categorías + resumen sticky */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
-          {/* ── Columna izquierda: categorías con controles ── */}
+          {/* ── Columna izquierda: categorías ── */}
           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
             {CATEGORIAS.map((cat, ci) => (
               <motion.div
@@ -298,14 +420,12 @@ export default function Alquiler() {
                           >
                             <Minus size={12} />
                           </button>
-
                           <span className={cn(
                             "w-6 text-center text-sm font-medium transition-colors duration-300",
                             qty > 0 ? "text-gold" : "text-white/20"
                           )}>
                             {qty}
                           </span>
-
                           <button
                             onClick={() => add(item.id)}
                             className="w-7 h-7 flex items-center justify-center border border-white/10 hover:border-gold/40 text-white/40 hover:text-gold transition-all duration-300"
@@ -334,8 +454,45 @@ export default function Alquiler() {
                 <span className="h-px flex-1 bg-gold/20" />
               </div>
 
+              {/* Datos del solicitante */}
+              <div className="flex flex-col gap-2">
+                <p className="text-white/25 text-[10px] tracking-[0.35em] uppercase">Datos del solicitante</p>
+                <div className="relative">
+                  <User size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Nombre y apellido"
+                    value={solicitante.nombre}
+                    onChange={(e) => setSolicitante((s) => ({ ...s, nombre: e.target.value }))}
+                    className={inputClass + " pl-8"}
+                  />
+                </div>
+                <div className="relative">
+                  <Mail size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                  <input
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={solicitante.email}
+                    onChange={(e) => setSolicitante((s) => ({ ...s, email: e.target.value }))}
+                    className={inputClass + " pl-8"}
+                  />
+                </div>
+                <div className="relative">
+                  <PhoneCall size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                  <input
+                    type="tel"
+                    placeholder="Teléfono / WhatsApp"
+                    value={solicitante.tel}
+                    onChange={(e) => setSolicitante((s) => ({ ...s, tel: e.target.value }))}
+                    className={inputClass + " pl-8"}
+                  />
+                </div>
+              </div>
+
+              <div className="h-px bg-white/5" />
+
               {/* Artículos seleccionados */}
-              <div className="flex flex-col gap-2 min-h-[80px]">
+              <div className="flex flex-col gap-2 min-h-[60px]">
                 {haySeleccion ? (
                   itemsSeleccionados.map(([id, qty]) => {
                     const item = findItem(id)!;
@@ -351,7 +508,7 @@ export default function Alquiler() {
                     );
                   })
                 ) : (
-                  <p className="text-white/15 text-xs italic text-center mt-3">
+                  <p className="text-white/15 text-xs italic text-center mt-2">
                     Usá los botones + para agregar artículos
                   </p>
                 )}
@@ -371,10 +528,7 @@ export default function Alquiler() {
                     {formatARS(total)}
                   </p>
                 ) : (
-                  <p
-                    className="text-white/15 text-lg italic"
-                    style={{ fontFamily: "var(--font-display, serif)" }}
-                  >
+                  <p className="text-white/15 text-lg italic" style={{ fontFamily: "var(--font-display, serif)" }}>
                     —
                   </p>
                 )}
@@ -385,7 +539,7 @@ export default function Alquiler() {
 
               {/* CTAs */}
               <button
-                onClick={() => generarCotizacion(cantidades)}
+                onClick={() => generarCotizacion(cantidades, solicitante)}
                 disabled={!haySeleccion}
                 className={cn(
                   "flex items-center justify-center gap-2 w-full py-4 font-semibold text-sm tracking-widest uppercase transition-all duration-300",
