@@ -73,6 +73,10 @@ Mismo archivo, buscar `const EXTRAS` — agrupados en Gastronomía, Bebidas y Se
 Archivo: `src/components/public/Alquiler.tsx`
 Buscar `const CATEGORIAS` — cada categoría tiene sus ítems con nombre, precio y unidad.
 
+El cliente puede seleccionar cantidades con los botones +/− de cada artículo y:
+- **Imprimir cotización**: abre una ventana con el documento listo para imprimir o guardar como PDF (con membrete, detalle, total y vigencia de 7 días).
+- **Enviar por WhatsApp**: manda el detalle completo al número de la empresa.
+
 ---
 
 ### Imágenes
