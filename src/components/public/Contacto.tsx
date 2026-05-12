@@ -345,6 +345,14 @@ export default function Contacto() {
             <p className="text-white/10 text-[10px] tracking-[0.3em] uppercase">
               Jujuy · NOA · Argentina
             </p>
+            <div className="flex gap-6">
+              <a href="/politicas-de-privacidad" className="text-white/20 hover:text-gold transition-colors duration-300 text-[10px] tracking-[0.25em] uppercase">
+                Política de Privacidad
+              </a>
+              <a href="/terminos-y-condiciones" className="text-white/20 hover:text-gold transition-colors duration-300 text-[10px] tracking-[0.25em] uppercase">
+                Términos y Condiciones
+              </a>
+            </div>
             <a
               href="http://qr.afip.gob.ar/?qr=V5rn39ln7Fw-TNLzgOZd6g,,"
               target="_F960AFIPInfo"
