@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Printer, Plus, Minus, Send, User, Mail, PhoneCall } from "lucide-react";
+import { Phone, Printer, Plus, Minus, Send, User, Mail, PhoneCall, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CATEGORIAS = [
@@ -308,6 +308,7 @@ const inputClass = "w-full bg-transparent border border-white/8 px-3 py-2.5 text
 export default function Alquiler() {
   const [cantidades, setCantidades]   = useState<Cantidades>({});
   const [solicitante, setSolicitante] = useState<Solicitante>({ nombre: "", email: "", tel: "" });
+  const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   const add = (id: string) =>
     setCantidades((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
@@ -322,6 +323,37 @@ export default function Alquiler() {
   const total              = calcTotal(cantidades);
   const itemsSeleccionados = Object.entries(cantidades).filter(([, q]) => q > 0);
   const haySeleccion       = itemsSeleccionados.length > 0;
+
+  const handleEmail = async () => {
+    if (!haySeleccion) return;
+    setEmailStatus("loading");
+
+    const items = itemsSeleccionados.map(([id, qty]) => {
+      const item = findItem(id)!;
+      return { nombre: item.nombre, unidad: item.unidad, precio: item.precio, qty };
+    });
+
+    try {
+      const res = await fetch("/api/cotizacion", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          cantidades,
+          solicitante,
+          items,
+          total,
+          nro:   nroCotizacion(),
+          fecha: new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" }),
+          vence: fechaVencimiento(),
+        }),
+      });
+      setEmailStatus(res.ok ? "ok" : "error");
+    } catch {
+      setEmailStatus("error");
+    }
+
+    setTimeout(() => setEmailStatus("idle"), 5000);
+  };
 
   const handleWhatsApp = () => {
     const lineas = itemsSeleccionados
@@ -552,6 +584,42 @@ export default function Alquiler() {
                 Imprimir cotización
               </button>
 
+              {/* Botón email */}
+              <button
+                onClick={handleEmail}
+                disabled={!haySeleccion || emailStatus === "loading" || emailStatus === "ok"}
+                className={cn(
+                  "flex items-center justify-center gap-2 w-full py-3.5 border font-medium text-xs tracking-widest uppercase transition-all duration-300",
+                  emailStatus === "ok"
+                    ? "border-green-500/40 text-green-400 cursor-default"
+                    : emailStatus === "error"
+                    ? "border-red-500/40 text-red-400"
+                    : haySeleccion
+                    ? "border-white/20 text-white/50 hover:border-gold/40 hover:text-gold"
+                    : "border-white/10 text-white/20 cursor-not-allowed"
+                )}
+              >
+                {emailStatus === "loading" ? (
+                  <><Loader2 size={13} className="animate-spin" /> Enviando...</>
+                ) : emailStatus === "ok" ? (
+                  <><CheckCircle size={13} /> Cotización enviada</>
+                ) : (
+                  <><Mail size={13} strokeWidth={2} /> Enviar por email</>
+                )}
+              </button>
+
+              {emailStatus === "ok" && (
+                <p className="text-white/20 text-[10px] text-center -mt-3">
+                  {solicitante.email ? "Enviado al catering y a su correo" : "Enviado al catering"}
+                </p>
+              )}
+              {emailStatus === "error" && (
+                <p className="text-red-400/60 text-[10px] text-center -mt-3">
+                  Error al enviar. Intente nuevamente.
+                </p>
+              )}
+
+              {/* Botón WhatsApp */}
               <button
                 onClick={handleWhatsApp}
                 disabled={!haySeleccion}
@@ -566,9 +634,9 @@ export default function Alquiler() {
                 Enviar por WhatsApp
               </button>
 
-              {haySeleccion && (
+              {haySeleccion && emailStatus === "idle" && (
                 <p className="text-white/20 text-[10px] text-center -mt-3">
-                  Se enviará el detalle completo de su selección
+                  WhatsApp envía el resumen en texto
                 </p>
               )}
 
