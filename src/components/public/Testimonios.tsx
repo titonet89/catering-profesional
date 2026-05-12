@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const TESTIMONIOS = [
   {
     nombre: "Claudia Mamani",
-    evento: "Casamiento · Marzo 2024",
+    evento: "Casamiento",
     texto:
       "La verdad que quedé re contra contenta!! Mis suegros no creían que iba a salir tan bien jaja y al final todos terminaron felices. La comida estuvo buenísima, el personal muy amable con todos los invitados. Gracias por hacer tan especial el día de Rodrigo y mío ❤️",
     iniciales: "CM",
@@ -15,7 +15,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Roberto Alvarado",
-    evento: "Cena de empresa · Octubre 2024",
+    evento: "Cena de empresa",
     texto:
       "Los contratamos para el cierre de año, unas 60 personas. Todo muy prolijo, llegaron puntual y lo que más me sorprendió fue la atención al detalle. Varios compañeros me preguntaron quién había organizado la comida. Los recomiendo sin dudarlo.",
     iniciales: "RA",
@@ -23,7 +23,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Griselda Torino",
-    evento: "15 años de Sofía · Agosto 2024",
+    evento: "15 años de Sofía",
     texto:
       "Organicé los 15 de mi hija con ellos y fue una de las mejores decisiones que tomé. Muy atentos desde el primer momento, me ayudaron con el menú porque yo no sabía bien qué pedir. Todo el salón quedó divino y los chicos del servicio re bien. Gracias totales!",
     iniciales: "GT",
@@ -31,7 +31,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Diego Colque",
-    evento: "Cumpleaños de 50 · Julio 2024",
+    evento: "Cumpleaños de 50",
     texto:
       "Mi señora me organizó una sorpresa para mis 50 con ellos. Cuando llegué y vi todo me emocioné de verdad. La comida abundante y rica, las bebidas muy bien surtidas. Los 80 invitados se fueron contentos y varios me pidieron el contacto.",
     iniciales: "DC",
@@ -39,7 +39,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Lic. Fernanda Sajama",
-    evento: "Acto institucional · Mayo 2024",
+    evento: "Acto institucional",
     texto:
       "Contratamos el servicio para un acto oficial del municipio. Cumplieron en tiempo y forma con todo lo acordado, los mozos muy presentables y correctos. Para eventos del sector público donde la imagen importa, son una opción muy confiable.",
     iniciales: "FS",
@@ -47,7 +47,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Analía Flores",
-    evento: "Boda · Noviembre 2024",
+    evento: "Boda",
     texto:
       "Desde la primera reunión nos sentimos muy cómodos. Nos dieron varias opciones de menú según nuestro presupuesto y nunca nos presionaron. El día del evento todo salió 10 puntos. Las fotos quedaron hermosas también gracias a cómo estaban puestas las mesas.",
     iniciales: "AF",
@@ -55,7 +55,7 @@ const TESTIMONIOS = [
   },
   {
     nombre: "Carlos Pérez Quiroga",
-    evento: "Gala solidaria · Junio 2024",
+    evento: "Gala solidaria",
     texto:
       "Organizamos una cena benéfica y necesitábamos que todo saliera perfecto. Se portaron increíble, muy profesionales pero sin perder el trato humano. Varios de los presentes ya me consultaron el contacto para sus propios eventos. Se los recomiendo a ojos cerrados.",
     iniciales: "CP",
