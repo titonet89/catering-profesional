@@ -1,40 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 295" fill="none">
   <defs>
 
-    <!-- Glow radial cálido — elemento dominante -->
-    <radialGradient id="glow" cx="50%" cy="62%" r="48%" gradientUnits="objectBoundingBox">
-      <stop offset="0%"   stop-color="#d97215" stop-opacity="0.82"/>
-      <stop offset="28%"  stop-color="#b85010" stop-opacity="0.52"/>
-      <stop offset="60%"  stop-color="#7a2c08" stop-opacity="0.22"/>
+    <!-- Glow radial grande — elemento dominante del original -->
+    <radialGradient id="glow" cx="50%" cy="62%" r="50%">
+      <stop offset="0%"   stop-color="#d87015" stop-opacity="0.82"/>
+      <stop offset="28%"  stop-color="#b04e10" stop-opacity="0.52"/>
+      <stop offset="62%"  stop-color="#7a2c08" stop-opacity="0.20"/>
       <stop offset="100%" stop-color="#3a0e00" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- Gradiente llama izquierda -->
-    <linearGradient id="gradL" x1="45%" y1="100%" x2="53%" y2="0%">
-      <stop offset="0%"   stop-color="#c05510"/>
-      <stop offset="38%"  stop-color="#ed8820"/>
-      <stop offset="72%"  stop-color="#f8aa42"/>
-      <stop offset="100%" stop-color="#fece7a" stop-opacity="0.82"/>
+    <!-- Llama izquierda: naranja cálido → ámbar suave en punta -->
+    <linearGradient id="gradL" x1="44%" y1="100%" x2="53%" y2="0%">
+      <stop offset="0%"   stop-color="#c05512"/>
+      <stop offset="38%"  stop-color="#ed8c22"/>
+      <stop offset="74%"  stop-color="#f8ac42"/>
+      <stop offset="100%" stop-color="#fece7c" stop-opacity="0.82"/>
     </linearGradient>
 
-    <!-- Gradiente llama derecha -->
-    <linearGradient id="gradR" x1="53%" y1="100%" x2="45%" y2="0%">
-      <stop offset="0%"   stop-color="#c85a15"/>
-      <stop offset="38%"  stop-color="#f09030"/>
-      <stop offset="72%"  stop-color="#faaf50"/>
-      <stop offset="100%" stop-color="#fdd888" stop-opacity="0.80"/>
+    <!-- Llama derecha: tono levemente más cálido -->
+    <linearGradient id="gradR" x1="54%" y1="100%" x2="46%" y2="0%">
+      <stop offset="0%"   stop-color="#c85c16"/>
+      <stop offset="38%"  stop-color="#f09232"/>
+      <stop offset="74%"  stop-color="#fab050"/>
+      <stop offset="100%" stop-color="#fdd884" stop-opacity="0.80"/>
     </linearGradient>
 
-    <!-- Gradiente arcos — borgoña oscuro -->
+    <!-- Arcos del plato: borgoña oscuro -->
     <linearGradient id="gradPlate" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#1c0404"/>
+      <stop offset="0%"   stop-color="#1a0404"/>
       <stop offset="50%"  stop-color="#5c1010"/>
-      <stop offset="100%" stop-color="#1c0404"/>
+      <stop offset="100%" stop-color="#1a0404"/>
     </linearGradient>
 
-    <!-- Suave glow sobre las llamas -->
-    <filter id="fg" x="-55%" y="-55%" width="210%" height="210%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/>
+    <!-- Halo suave sobre las llamas (blur+merge) -->
+    <filter id="fg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
       <feMerge>
         <feMergeNode in="b"/>
         <feMergeNode in="SourceGraphic"/>
@@ -43,58 +43,56 @@
 
   </defs>
 
-  <!-- ── GLOW AMBIENTAL ── grande, radial, cálido -->
-  <ellipse cx="150" cy="178" rx="142" ry="118" fill="url(#glow)"/>
+  <!-- ── GLOW AMBIENTAL ── gran elipse radial cálida (fondo) -->
+  <ellipse cx="150" cy="176" rx="140" ry="114" fill="url(#glow)"/>
 
   <!-- ══════════════════════════════════
        LLAMA IZQUIERDA
-       S-curve pronunciada hacia la izquierda
-       Base compartida al centro, punta arriba-izq
+       Wisp en S: base central, cuerpo curva a la izquierda,
+       punta sube y vuelve levemente hacia la derecha
   ══════════════════════════════════ -->
   <path d="
-    M 141 187
-    C 119 178, 95 160, 99 136
-    C 102 116, 115 97, 120 77
-    C 122 66, 121 57, 122 51
-    C 129 64, 135 84, 132 107
-    C 130 126, 141 144, 142 164
-    C 143 176, 142 184, 141 187
+    M 144 184
+    C 113 175,  92 155,  99 135
+    C 104 118,  113  98, 118  78
+    C 120  67,  120  60, 121  55
+    C 129  69,  134  97, 131 121
+    C 129 141,  138 163, 141 182
     Z"
     fill="url(#gradL)" filter="url(#fg)"/>
 
   <!-- ══════════════════════════════════
        LLAMA DERECHA
-       S-curve pronunciada hacia la derecha
-       Ligeramente más alta, más estrecha
+       Wisp en S: base central, cuerpo curva a la derecha,
+       punta ligeramente más alta, curva vuelve a la izquierda
   ══════════════════════════════════ -->
   <path d="
-    M 153 187
-    C 174 178, 197 160, 195 136
-    C 192 116, 180 97, 175 77
-    C 172 66, 173 57, 172 51
-    C 164 64, 159 84, 162 107
-    C 164 126, 153 144, 151 164
-    C 150 176, 152 184, 153 187
+    M 149 184
+    C 178 175, 198 155, 192 135
+    C 187 118, 178  98, 173  78
+    C 171  67, 171  60, 170  54
+    C 162  68, 157  96, 160 121
+    C 162 141, 153 163, 150 182
     Z"
     fill="url(#gradR)" filter="url(#fg)"/>
 
   <!-- ══════════════════════════════════
-       ARCOS DEL PLATO — anchos, borgoña
-       Tres concéntricos, separados por pocos px
+       ARCOS DEL PLATO — tres anchos, borgoña
+       Extienden bastante más allá del ancho de las llamas
   ══════════════════════════════════ -->
 
-  <!-- Arco exterior -->
-  <path d="M 42 196 Q 150 238 258 196"
-    stroke="url(#gradPlate)" stroke-width="11"
+  <!-- Arco exterior (más ancho) -->
+  <path d="M 40 193 Q 150 238 260 193"
+    stroke="url(#gradPlate)" stroke-width="11.5"
     stroke-linecap="round" fill="none"/>
 
   <!-- Arco medio -->
-  <path d="M 67 206 Q 150 244 233 206"
-    stroke="url(#gradPlate)" stroke-width="8"
+  <path d="M 66 203 Q 150 244 234 203"
+    stroke="url(#gradPlate)" stroke-width="8.5"
     stroke-linecap="round" fill="none"/>
 
-  <!-- Arco interior -->
-  <path d="M 93 215 Q 150 250 207 215"
+  <!-- Arco interior (más estrecho) -->
+  <path d="M 93 212 Q 150 249 207 212"
     stroke="url(#gradPlate)" stroke-width="6"
     stroke-linecap="round" fill="none"/>
 
