@@ -45,7 +45,7 @@ export default function PoliticasDePrivacidad() {
             Política de Privacidad
           </h1>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            Última actualización: mayo de 2025 · Conforme a la Ley N° 25.326 de Protección de Datos Personales (Argentina)
+            Última actualización: mayo de 2026 · Conforme a la Ley N° 25.326 de Protección de Datos Personales (Argentina)
           </p>
         </div>
 
@@ -97,7 +97,20 @@ export default function PoliticasDePrivacidad() {
           {/* 3 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              3. Finalidad del tratamiento
+              3. Consentimiento del usuario
+            </h2>
+            <p>
+              Al completar y enviar el formulario de contacto de este sitio web, el usuario presta su <strong className="text-white">consentimiento libre, expreso e informado</strong> para el tratamiento de sus datos personales con las finalidades descriptas en la presente política, en los términos exigidos por el artículo 5° de la Ley N° 25.326.
+            </p>
+            <p className="mt-3">
+              El usuario puede revocar su consentimiento en cualquier momento, sin que ello afecte la licitud del tratamiento efectuado con anterioridad, mediante los canales indicados en el apartado 8.
+            </p>
+          </section>
+
+          {/* 4 */}
+          <section>
+            <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
+              4. Finalidad del tratamiento
             </h2>
             <p>Los datos recolectados se utilizan exclusivamente para:</p>
             <ul className="mt-3 flex flex-col gap-2 pl-5">
@@ -117,10 +130,10 @@ export default function PoliticasDePrivacidad() {
             </p>
           </section>
 
-          {/* 4 */}
+          {/* 5 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              4. Servicios de terceros que procesan sus datos
+              5. Servicios de terceros que procesan sus datos
             </h2>
             <p>
               Para el funcionamiento técnico del sitio y la gestión de consultas, utilizamos los siguientes servicios de terceros, cada uno con sus propias políticas de privacidad:
@@ -140,24 +153,24 @@ export default function PoliticasDePrivacidad() {
               </li>
             </ul>
             <p className="mt-3">
-              Estos proveedores actúan como encargados del tratamiento y están sujetos a acuerdos de confidencialidad. Sus servidores pueden estar ubicados fuera de Argentina.
-            </p>
-          </section>
-
-          {/* 5 */}
-          <section>
-            <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              5. Plazo de conservación
-            </h2>
-            <p>
-              Sus datos se conservan por el tiempo necesario para gestionar su consulta y, en caso de contratación, durante el plazo legal correspondiente según la normativa argentina vigente. Si no existe contratación, los datos son eliminados dentro de los 12 meses de recibida la consulta.
+              Estos proveedores actúan como encargados del tratamiento y están sujetos a acuerdos de confidencialidad. Algunos de sus servidores pueden estar ubicados fuera de la República Argentina. Al proporcionar sus datos a través de este sitio, el usuario presta su <strong className="text-white">consentimiento expreso para dicha transferencia internacional</strong>, conforme al artículo 12° de la Ley N° 25.326. Dichos proveedores adoptan cláusulas contractuales adecuadas y cumplen estándares de protección de datos compatibles con la normativa internacional aplicable.
             </p>
           </section>
 
           {/* 6 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              6. Derechos del titular (ARCO)
+              6. Plazo de conservación
+            </h2>
+            <p>
+              Sus datos se conservan por el tiempo necesario para gestionar su consulta y, en caso de contratación, durante el plazo legal correspondiente según la normativa argentina vigente. Si no existe contratación, los datos son eliminados dentro de los 12 meses de recibida la consulta.
+            </p>
+          </section>
+
+          {/* 7 */}
+          <section>
+            <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
+              7. Derechos del titular (ARCO)
             </h2>
             <p>
               De acuerdo con el artículo 14° de la Ley 25.326, usted tiene derecho a:
@@ -176,14 +189,14 @@ export default function PoliticasDePrivacidad() {
               ))}
             </ul>
             <p className="mt-4 px-5 py-4 text-xs" style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)" }}>
-              <strong className="text-white">Aviso legal:</strong> La Dirección Nacional de Protección de Datos Personales (DNPDP) tiene la atribución de atender las denuncias y reclamos que se interpongan con relación al incumplimiento de las normas sobre protección de datos personales.
+              <strong className="text-white">Aviso legal:</strong> La AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, órgano de control de la Ley N° 25.326, tiene la atribución de atender las denuncias y reclamos que se interpongan con relación al incumplimiento de las normas sobre protección de datos personales.
             </p>
           </section>
 
-          {/* 7 */}
+          {/* 8 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              7. Cómo ejercer sus derechos
+              8. Cómo ejercer sus derechos
             </h2>
             <p>
               Para ejercer cualquiera de los derechos mencionados, puede contactarnos por cualquiera de las siguientes vías:
@@ -198,30 +211,33 @@ export default function PoliticasDePrivacidad() {
             </p>
           </section>
 
-          {/* 8 */}
-          <section>
-            <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              8. Cookies y tecnologías de seguimiento
-            </h2>
-            <p>
-              Este sitio web no utiliza cookies propias de seguimiento ni publicidad. Los servicios de terceros mencionados (Vercel, Supabase) pueden utilizar cookies técnicas necesarias para el funcionamiento. No se realiza seguimiento de navegación con fines comerciales.
-            </p>
-          </section>
-
           {/* 9 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              9. Modificaciones de esta política
+              9. Cookies y tecnologías de seguimiento
             </h2>
             <p>
-              Podemos actualizar esta política de privacidad en cualquier momento. Los cambios serán publicados en esta misma página con la fecha de última actualización. Le recomendamos revisarla periódicamente.
+              El sitio puede utilizar cookies técnicas necesarias para su correcto funcionamiento, incluyendo las generadas por los servicios de infraestructura que utilizamos (Vercel, Supabase). Estas tecnologías pueden incluir registros de acceso (logs), sistemas de protección anti-bot y mecanismos de seguridad similares, propios del funcionamiento de dichas plataformas.
+            </p>
+            <p className="mt-3">
+              No se utilizan cookies propias con fines publicitarios ni se realiza seguimiento de la navegación del usuario con fines comerciales.
             </p>
           </section>
 
           {/* 10 */}
           <section>
             <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
-              10. Jurisdicción y ley aplicable
+              10. Modificaciones de esta política
+            </h2>
+            <p>
+              Podemos actualizar esta política de privacidad en cualquier momento. Los cambios serán publicados en esta misma página con la fecha de última actualización. Le recomendamos revisarla periódicamente.
+            </p>
+          </section>
+
+          {/* 11 */}
+          <section>
+            <h2 className="text-base font-semibold text-white mb-3 tracking-wide">
+              11. Jurisdicción y ley aplicable
             </h2>
             <p>
               Esta política se rige por la Ley N° 25.326 de Protección de Datos Personales de la República Argentina y sus normas complementarias. Ante cualquier controversia, serán competentes los tribunales ordinarios de la ciudad de San Salvador de Jujuy, Provincia de Jujuy, Argentina.
