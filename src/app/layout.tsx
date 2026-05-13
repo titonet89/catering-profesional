@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Playfair_Display } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,12 +21,12 @@ export const metadata: Metadata = {
   description:
     "Bodas, eventos corporativos, galas, cumpleaños y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
   keywords: "catering, eventos, bodas, corporativo, quinceañeros, Jujuy, NOA, gastronomía, alquiler vajilla",
-  metadataBase: new URL("https://catering-profesional.vercel.app"),
+  metadataBase: new URL("https://www.cateringprofesional.com.ar"),
   openGraph: {
     title: "Catering Profesional Jujuy | Eventos & Gastronomía de Autor",
     description:
       "Bodas, eventos corporativos, galas y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
-    url: "https://catering-profesional.vercel.app",
+    url: "https://www.cateringprofesional.com.ar",
     siteName: "Catering Profesional Jujuy",
     locale: "es_AR",
     type: "website",
@@ -48,6 +49,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-cream text-charcoal">
         {children}
+        <Analytics />
       </body>
     </html>
   );
