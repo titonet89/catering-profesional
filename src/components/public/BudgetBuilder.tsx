@@ -29,7 +29,12 @@ const PACKAGES = [
     pricePerPerson: 59900,
     tag:            "Lo esencial",
     color:          "border-white/10",
-    includes:       ["Sándwiches y empanadas", "Bebidas sin alcohol", "Servicio de mesa", "Vajilla básica"],
+    includes:       [
+      "Sándwiches y empanadas caseros",
+      "Bebidas sin alcohol",
+      "Servicio de mesa",
+      "Vajilla estándar",
+    ],
   },
   {
     id:             "clasico",
@@ -37,7 +42,12 @@ const PACKAGES = [
     pricePerPerson: 79900,
     tag:            "El más elegido",
     color:          "border-white/10",
-    includes:       ["Entrada + plato principal + postre", "Bebidas con alcohol", "Servicio de mesa completo", "Vajilla premium"],
+    includes:       [
+      "Entrada + plato principal + postre",
+      "Variedad de opciones por plato",
+      "Bebidas con y sin alcohol",
+      "Servicio de mesa completo",
+    ],
   },
   {
     id:             "premium",
@@ -46,7 +56,28 @@ const PACKAGES = [
     tag:            "Recomendado",
     color:          "border-gold/50",
     featured:       true,
-    includes:       ["Menú de autor 3 pasos", "Open bar completo", "Servicio de camareros", "Vajilla gourmet", "Decoración floral básica"],
+    includes:       [
+      "Lunch completo: entrada caliente, principal y postre",
+      "Dos opciones de menú por plato",
+      "Open bar incluido",
+      "Servicio de camareros",
+      "Vajilla premium",
+    ],
+  },
+  {
+    id:             "lunch",
+    name:           "Lunch",
+    pricePerPerson: 109900,
+    tag:            "Variedad y distinción",
+    color:          "border-white/10",
+    includes:       [
+      "Variedad amplia de platos y guarniciones",
+      "Múltiples opciones de menú por plato",
+      "Open bar completo",
+      "Servicio de camareros",
+      "Vajilla exclusiva",
+      "Ambientación de mesa incluida",
+    ],
   },
   {
     id:             "gala",
@@ -54,7 +85,14 @@ const PACKAGES = [
     pricePerPerson: 119900,
     tag:            "La experiencia total",
     color:          "border-white/10",
-    includes:       ["Menú 5 pasos de autor", "Open bar premium + sommelier", "Servicio white glove", "Vajilla exclusiva", "Decoración completa"],
+    includes:       [
+      "Menú elaborado especial (a coordinar)",
+      "Selección gastronómica completa",
+      "Open bar premium",
+      "Servicio de camareros con protocolo",
+      "Vajilla exclusiva",
+      "Decoración completa incluida",
+    ],
   },
 ];
 
@@ -337,9 +375,10 @@ export default function BudgetBuilder() {
             {/* PASO 3: Paquete de menú */}
             <motion.div {...fadeUp}>
               <StepLabel n={3} label="Elegí tu menú base" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {PACKAGES.map((pkg) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {PACKAGES.map((pkg, index) => {
                   const active = config.package === pkg.id;
+                  const isLastOdd = index === PACKAGES.length - 1 && PACKAGES.length % 2 !== 0;
                   return (
                     <button
                       key={pkg.id}
@@ -349,7 +388,8 @@ export default function BudgetBuilder() {
                         active
                           ? "border-gold bg-gold/5"
                           : "border-white/8 hover:border-white/20",
-                        pkg.featured && !active && "border-gold/25"
+                        pkg.featured && !active && "border-gold/25",
+                        isLastOdd && "sm:col-span-2 sm:max-w-sm sm:mx-auto sm:w-full lg:col-span-1 lg:max-w-none lg:mx-0"
                       )}
                     >
                       {pkg.featured && (
