@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 230" fill="none">
+  <defs>
+    <radialGradient id="plateGrad" cx="38%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#7a3c1e"/>
+      <stop offset="55%" stop-color="#3d1a08"/>
+      <stop offset="100%" stop-color="#1a0804"/>
+    </radialGradient>
+    <linearGradient id="plateInner" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#c8b898" stop-opacity="0.92"/>
+      <stop offset="50%"  stop-color="#f0e6d0" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#c0a880" stop-opacity="0.88"/>
+    </linearGradient>
+    <linearGradient id="rimAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#2a0e06"/>
+      <stop offset="100%" stop-color="#5c2810"/>
+    </linearGradient>
+    <linearGradient id="steamBrown" x1="30%" y1="100%" x2="70%" y2="0%">
+      <stop offset="0%"   stop-color="#3d1808"/>
+      <stop offset="55%"  stop-color="#7a3c1e"/>
+      <stop offset="100%" stop-color="#8b4c28" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="steamGold" x1="20%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%"   stop-color="#7a5020"/>
+      <stop offset="40%"  stop-color="#c9a84c"/>
+      <stop offset="75%"  stop-color="#e8d07a"/>
+      <stop offset="100%" stop-color="#f4e8b0" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sombra base del plato -->
+  <ellipse cx="143" cy="198" rx="128" ry="32" fill="#1a0804" opacity="0.4"/>
+
+  <!-- Plato exterior (marron oscuro) -->
+  <ellipse cx="142" cy="193" rx="124" ry="29" fill="url(#plateGrad)"/>
+
+  <!-- Superficie del plato (crema/champagne) -->
+  <ellipse cx="145" cy="188" rx="101" ry="22" fill="url(#plateInner)"/>
+
+  <!-- Acento derecho del borde del plato -->
+  <path d="M 232 182 Q 264 190 262 198 Q 260 207 228 205 Q 248 200 246 190 Z"
+        fill="url(#rimAccent)" opacity="0.65"/>
+
+  <!-- Vapor izquierdo — marrón chocolate, curva S -->
+  <path d="
+    M 104 187
+    C  94 170,  103 153,  92 136
+    C  81 119,   92 101,  84  83
+    C  78  68,   84  53,  90  42
+    C  96  53,   92  68,  98  83
+    C 106 101,   98 119, 108 136
+    C 118 153,  110 170, 116 187
+    Z"
+    fill="url(#steamBrown)"/>
+
+  <!-- Vapor derecho — dorado, curva S invertida -->
+  <path d="
+    M 140 183
+    C 131 166,  143 149,  132 131
+    C 121 113,  134  95,  125  77
+    C 118  61,  126  47,  133  36
+    C 142  47,  138  61,  148  77
+    C 158  95,  147 113,  158 131
+    C 169 149,  159 166,  160 183
+    Z"
+    fill="url(#steamGold)"/>
+</svg>

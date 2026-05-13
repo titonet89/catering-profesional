@@ -96,9 +96,9 @@ export default function Hero() {
           <motion.div variants={item} className="mb-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Catering Profesional"
-              className="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-2xl"
+              className="w-40 h-40 sm:w-52 sm:h-52 object-contain drop-shadow-2xl"
             />
           </motion.div>
 
