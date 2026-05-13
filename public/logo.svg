@@ -1,66 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 230" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 295" fill="none">
   <defs>
-    <radialGradient id="plateGrad" cx="38%" cy="38%" r="65%">
-      <stop offset="0%" stop-color="#7a3c1e"/>
-      <stop offset="55%" stop-color="#3d1a08"/>
-      <stop offset="100%" stop-color="#1a0804"/>
-    </radialGradient>
-    <linearGradient id="plateInner" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#c8b898" stop-opacity="0.92"/>
-      <stop offset="50%"  stop-color="#f0e6d0" stop-opacity="0.96"/>
-      <stop offset="100%" stop-color="#c0a880" stop-opacity="0.88"/>
+
+    <!-- Halo de luz ambiental difuso -->
+    <filter id="halo" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="28"/>
+    </filter>
+
+    <!-- Brillo suave sobre las llamas -->
+    <filter id="flameGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Gradiente llama izquierda: naranja cálido → dorado suave arriba -->
+    <linearGradient id="gradL" x1="40%" y1="100%" x2="60%" y2="0%">
+      <stop offset="0%"   stop-color="#b86010"/>
+      <stop offset="30%"  stop-color="#e08c24"/>
+      <stop offset="65%"  stop-color="#f0b040"/>
+      <stop offset="100%" stop-color="#fad878" stop-opacity="0.78"/>
     </linearGradient>
-    <linearGradient id="rimAccent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#2a0e06"/>
-      <stop offset="100%" stop-color="#5c2810"/>
+
+    <!-- Gradiente llama derecha: tono más cálido y luminoso -->
+    <linearGradient id="gradR" x1="35%" y1="100%" x2="65%" y2="0%">
+      <stop offset="0%"   stop-color="#c06818"/>
+      <stop offset="35%"  stop-color="#e89c2c"/>
+      <stop offset="70%"  stop-color="#f5bc48"/>
+      <stop offset="100%" stop-color="#fde494" stop-opacity="0.72"/>
     </linearGradient>
-    <linearGradient id="steamBrown" x1="30%" y1="100%" x2="70%" y2="0%">
-      <stop offset="0%"   stop-color="#3d1808"/>
-      <stop offset="55%"  stop-color="#7a3c1e"/>
-      <stop offset="100%" stop-color="#8b4c28" stop-opacity="0.5"/>
+
+    <!-- Gradiente arcos del plato: borgoña oscuro -->
+    <linearGradient id="gradPlate" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#3e0e0e"/>
+      <stop offset="45%"  stop-color="#7a1c1c"/>
+      <stop offset="100%" stop-color="#3e0e0e"/>
     </linearGradient>
-    <linearGradient id="steamGold" x1="20%" y1="100%" x2="80%" y2="0%">
-      <stop offset="0%"   stop-color="#7a5020"/>
-      <stop offset="40%"  stop-color="#c9a84c"/>
-      <stop offset="75%"  stop-color="#e8d07a"/>
-      <stop offset="100%" stop-color="#f4e8b0" stop-opacity="0.6"/>
-    </linearGradient>
+
   </defs>
 
-  <!-- Sombra base del plato -->
-  <ellipse cx="143" cy="198" rx="128" ry="32" fill="#1a0804" opacity="0.4"/>
+  <!-- ── Halo ambiental cálido (fondo, completamente desenfocado) ── -->
+  <ellipse cx="148" cy="150" rx="72" ry="84"
+           fill="#d07010" filter="url(#halo)" opacity="0.52"/>
 
-  <!-- Plato exterior (marron oscuro) -->
-  <ellipse cx="142" cy="193" rx="124" ry="29" fill="url(#plateGrad)"/>
-
-  <!-- Superficie del plato (crema/champagne) -->
-  <ellipse cx="145" cy="188" rx="101" ry="22" fill="url(#plateInner)"/>
-
-  <!-- Acento derecho del borde del plato -->
-  <path d="M 232 182 Q 264 190 262 198 Q 260 207 228 205 Q 248 200 246 190 Z"
-        fill="url(#rimAccent)" opacity="0.65"/>
-
-  <!-- Vapor izquierdo — marrón chocolate, curva S -->
+  <!-- ══════════════════════════════════
+       LLAMA IZQUIERDA
+       Curva: base central-izquierda, se abre hacia la izquierda
+       al subir, luego vuelve al centro en punta
+  ══════════════════════════════════ -->
   <path d="
-    M 104 187
-    C  94 170,  103 153,  92 136
-    C  81 119,   92 101,  84  83
-    C  78  68,   84  53,  90  42
-    C  96  53,   92  68,  98  83
-    C 106 101,   98 119, 108 136
-    C 118 153,  110 170, 116 187
+    M 130 214
+    C 113 198,  86 176,  88 153
+    C  90 130, 108 118, 114  97
+    C 118  80, 112  64, 114  52
+    C 122  65, 128  82, 126 100
+    C 124 118, 140 134, 140 155
+    C 140 177, 150 197, 148 214
     Z"
-    fill="url(#steamBrown)"/>
+    fill="url(#gradL)"
+    filter="url(#flameGlow)"/>
 
-  <!-- Vapor derecho — dorado, curva S invertida -->
+  <!-- Vena interna izquierda (da profundidad y organicidad) -->
+  <path d="M 119 196 C 106 176, 95 155, 101 134 C 107 115, 116 106, 113 84"
+        stroke="#f0a820" stroke-width="2" stroke-linecap="round"
+        fill="none" opacity="0.45"/>
+
+  <!-- ══════════════════════════════════
+       LLAMA DERECHA
+       Más alta y delgada, curva en S suave
+  ══════════════════════════════════ -->
   <path d="
-    M 140 183
-    C 131 166,  143 149,  132 131
-    C 121 113,  134  95,  125  77
-    C 118  61,  126  47,  133  36
-    C 142  47,  138  61,  148  77
-    C 158  95,  147 113,  158 131
-    C 169 149,  159 166,  160 183
+    M 148 214
+    C 150 198, 163 180, 171 159
+    C 179 138, 170 118, 163  97
+    C 157  78, 160  62, 158  48
+    C 151  62, 147  80, 152 100
+    C 157 120, 147 140, 142 161
+    C 137 181, 143 198, 148 214
     Z"
-    fill="url(#steamGold)"/>
+    fill="url(#gradR)"
+    filter="url(#flameGlow)"/>
+
+  <!-- Vena interna derecha -->
+  <path d="M 155 200 C 165 180, 169 158, 162 138 C 155 120, 149 108, 153 86"
+        stroke="#f5b83a" stroke-width="2" stroke-linecap="round"
+        fill="none" opacity="0.42"/>
+
+  <!-- ══════════════════════════════════
+       ARCOS DEL PLATO — tres concéntricos
+       Borgoña oscuro, strokeLinecap round
+  ══════════════════════════════════ -->
+
+  <!-- Arco exterior (más ancho y grueso) -->
+  <path d="M 55 234 Q 150 268 245 234"
+        stroke="url(#gradPlate)" stroke-width="8.5"
+        stroke-linecap="round" fill="none"/>
+
+  <!-- Arco medio -->
+  <path d="M 80 243 Q 150 273 220 243"
+        stroke="url(#gradPlate)" stroke-width="6.5"
+        stroke-linecap="round" fill="none"/>
+
+  <!-- Arco interior (más estrecho y fino) -->
+  <path d="M 104 251 Q 150 276 196 251"
+        stroke="url(#gradPlate)" stroke-width="5"
+        stroke-linecap="round" fill="none"/>
+
 </svg>
