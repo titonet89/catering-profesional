@@ -94,12 +94,31 @@ export default function Hero() {
         >
           {/* Logo */}
           <motion.div variants={item} className="mb-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo.svg"
-              alt="Catering Profesional"
-              className="w-40 h-40 sm:w-52 sm:h-52 object-contain drop-shadow-2xl"
-            />
+            <svg
+              className="h-44 sm:h-56 w-auto"
+              viewBox="60 85 288 450"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="Catering Profesional"
+              role="img"
+            >
+              <defs>
+                <filter id="logo-fx" x="-55%" y="-55%" width="210%" height="210%">
+                  {/* Elimina el fondo blanco */}
+                  <feColorMatrix type="matrix" in="SourceGraphic"
+                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -1 -1 -1 3 0"
+                    result="noWhite"/>
+                  {/* Glow cálido ámbar */}
+                  <feGaussianBlur in="noWhite" stdDeviation="18" result="blurred"/>
+                  <feFlood floodColor="#c87010" floodOpacity="0.62" result="glowColor"/>
+                  <feComposite in="glowColor" in2="blurred" operator="in" result="warmGlow"/>
+                  <feMerge>
+                    <feMergeNode in="warmGlow"/>
+                    <feMergeNode in="noWhite"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <image href="/logo-original.png" width="408" height="612" filter="url(#logo-fx)"/>
+            </svg>
           </motion.div>
 
           {/* Línea decorativa */}
