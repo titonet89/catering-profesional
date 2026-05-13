@@ -18,6 +18,9 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Catering Profesional Jujuy | Eventos & Gastronomía de Autor",
+  other: {
+    copyright: "© Catering Profesional Organización de Eventos — Obra registrada. CUIT 27-34061402-5",
+  },
   description:
     "Bodas, eventos corporativos, galas, cumpleaños y más. Catering premium en Jujuy y el NOA con menús exclusivos y servicio impecable.",
   keywords: "catering, eventos, bodas, corporativo, quinceañeros, Jujuy, NOA, gastronomía, alquiler vajilla",
