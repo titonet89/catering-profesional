@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare } from "lucide-react";
-
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "catering2025";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock } from "lucide-react";
+import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
 
-type Tab = "galeria" | "consultas";
+type Tab = "galeria" | "consultas" | "seguridad";
 
 type Submission = {
   id: string;
@@ -21,10 +20,7 @@ type Submission = {
 };
 
 export default function AdminPage() {
-  const [auth, setAuth]           = useState(false);
-  const [pwd, setPwd]             = useState("");
-  const [pwdError, setPwdError]   = useState(false);
-  const [tab, setTab]             = useState<Tab>("galeria");
+  const [tab, setTab] = useState<Tab>("galeria");
 
   // galería
   const [items, setItems]         = useState<GalleryItem[]>([]);
@@ -36,11 +32,8 @@ export default function AdminPage() {
   // consultas
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
-  const login = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pwd === ADMIN_PASSWORD) { setAuth(true); setPwdError(false); }
-    else setPwdError(true);
-  };
+  // cambio de contraseña
+  const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
 
   const loadItems = async () => {
     const { data } = await supabase
@@ -59,12 +52,11 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!auth) return;
     loadItems();
     loadSubmissions();
-  }, [auth]);
+  }, []);
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleUpload = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     const file = fileRef.current?.files?.[0];
     if (!file || !title) return;
@@ -109,34 +101,9 @@ export default function AdminPage() {
   const getPublicUrl = (path: string) =>
     supabase.storage.from("galeria").getPublicUrl(path).data.publicUrl;
 
-  if (!auth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0a0a" }}>
-        <form onSubmit={login} className="flex flex-col gap-4 w-full max-w-sm p-8 border border-white/10">
-          <div className="flex flex-col items-center gap-2 mb-4">
-            <span className="text-gold text-[10px] tracking-[0.5em] uppercase">Panel Admin</span>
-            <h1 className="text-white text-2xl font-bold tracking-wide" style={{ fontFamily: "var(--font-display, serif)" }}>
-              Catering Profesional
-            </h1>
-          </div>
-          <input
-            type="password"
-            value={pwd}
-            onChange={(e) => setPwd(e.target.value)}
-            placeholder="Contraseña"
-            className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
-          />
-          {pwdError && <p className="text-red-400 text-xs">Contraseña incorrecta</p>}
-          <button type="submit" className="py-3 bg-gold text-charcoal font-semibold text-sm tracking-widest uppercase hover:bg-gold-light transition-colors">
-            Ingresar
-          </button>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0a", color: "white" }}>
+
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-white/8">
         <div>
@@ -145,14 +112,20 @@ export default function AdminPage() {
             Catering Profesional
           </h1>
         </div>
-        <button onClick={() => setAuth(false)} className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors">
-          <LogOut size={15} /> Salir
-        </button>
+        <form action={logoutAction}>
+          <button type="submit" className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors">
+            <LogOut size={15} /> Salir
+          </button>
+        </form>
       </header>
 
       {/* Tabs */}
       <div className="flex border-b border-white/8 px-6">
-        {([["galeria", Image, "Galería"], ["consultas", MessageSquare, "Consultas"]] as const).map(([id, Icon, label]) => (
+        {([
+          ["galeria",   Image,         "Galería"],
+          ["consultas", MessageSquare, "Consultas"],
+          ["seguridad", Lock,          "Seguridad"],
+        ] as const).map(([id, Icon, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -171,7 +144,6 @@ export default function AdminPage() {
         {tab === "galeria" && (
           <div className="flex flex-col gap-10">
 
-            {/* Formulario subida */}
             <div className="border border-white/8 p-7">
               <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">Subir nueva foto o video</h2>
               <form onSubmit={handleUpload} className="flex flex-col gap-4">
@@ -216,7 +188,6 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* Lista de items */}
             <div>
               <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">
                 Fotos y videos ({items.length})
@@ -299,6 +270,52 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ── TAB SEGURIDAD ── */}
+        {tab === "seguridad" && (
+          <div className="max-w-sm">
+            <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">Cambiar contraseña</h2>
+            <form action={changePwdAction} className="flex flex-col gap-4">
+              <input
+                type="password"
+                name="current"
+                placeholder="Contraseña actual"
+                autoComplete="current-password"
+                className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+              />
+              <input
+                type="password"
+                name="new"
+                placeholder="Nueva contraseña (mín. 8 caracteres)"
+                autoComplete="new-password"
+                className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+              />
+              <input
+                type="password"
+                name="confirm"
+                placeholder="Repetir nueva contraseña"
+                autoComplete="new-password"
+                className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+              />
+
+              {changePwdState?.error && (
+                <p className="text-red-400 text-xs">{changePwdState.error}</p>
+              )}
+              {changePwdState?.success && (
+                <p className="text-emerald-400 text-xs">{changePwdState.success}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={changePwdPending}
+                className="py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-50"
+              >
+                {changePwdPending ? "Guardando..." : "Cambiar contraseña"}
+              </button>
+            </form>
+          </div>
+        )}
+
       </div>
     </div>
   );
