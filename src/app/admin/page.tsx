@@ -151,7 +151,7 @@ export default function AdminPage() {
                   <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Título (ej: Boda en Palermo)"
+                    placeholder="Título (ej: Boda en Jujuy)"
                     required
                     className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
                   />
