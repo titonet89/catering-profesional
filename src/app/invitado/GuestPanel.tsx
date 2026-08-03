@@ -113,7 +113,7 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
               <div className="flex flex-col gap-1">
                 <label className="text-white/30 text-[10px] tracking-widest uppercase">Tipo de evento</label>
                 <select name="tipo_evento" defaultValue={solicitud.tipo_evento} className={`${inputClass} bg-[#111]`}>
-                  {TIPOS_EVENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TIPOS_EVENTO.map(t => <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-1">
@@ -196,9 +196,9 @@ function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col gap-1 sm:col-span-2">
           <label className="text-white/30 text-[10px] tracking-widest uppercase">Paquete *</label>
           <select name="paquete" required className={`${inputClass} bg-[#111]`}>
-            <option value="">Seleccioná un paquete...</option>
+            <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná un paquete...</option>
             {PAQUETES_LISTA.map(p => (
-              <option key={p.id} value={p.id}>{p.nombre}</option>
+              <option key={p.id} value={p.id} style={{ background: "#111", color: "#fff" }}>{p.nombre}</option>
             ))}
           </select>
         </div>
@@ -225,8 +225,8 @@ function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col gap-1">
           <label className="text-white/30 text-[10px] tracking-widest uppercase">Tipo de evento *</label>
           <select name="tipo_evento" required className={`${inputClass} bg-[#111]`}>
-            <option value="">Seleccioná...</option>
-            {TIPOS_EVENTO.map(t => <option key={t} value={t}>{t}</option>)}
+            <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná...</option>
+            {TIPOS_EVENTO.map(t => <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">

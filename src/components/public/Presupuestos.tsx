@@ -228,8 +228,8 @@ export default function Presupuestos() {
                     </label>
                     <select value={form.tipo_evento} onChange={(e) => set("tipo_evento", e.target.value)}
                       required className={`${inputClass} bg-[#111]`}>
-                      <option value="">Seleccioná...</option>
-                      {TIPOS_EVENTO.map((t) => <option key={t} value={t}>{t}</option>)}
+                      <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná...</option>
+                      {TIPOS_EVENTO.map((t) => <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>)}
                     </select>
                   </div>
 
