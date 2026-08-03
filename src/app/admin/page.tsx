@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package } from "lucide-react";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
-import { PAQUETES, formatPrecio, PRECIO_MINIMO_INVITADOS } from "@/data/paquetes";
+import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction } from "@/app/actions/admin-presupuesto";
+import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
 
@@ -37,6 +38,153 @@ type Submission = {
   created_at: string;
 };
 
+const SITE_URL = "https://cateringprofesional.com.ar";
+const TIPOS_EVENTO_ADMIN = ["Boda", "Cumpleaños", "Evento corporativo", "Gala", "Quinceañero", "Bautismo", "Comunión", "Aniversario", "Otro"];
+const inputAdmin = "w-full bg-transparent border border-white/10 px-4 py-2.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors";
+
+function QuickPresupuestoModal({
+  paqueteId,
+  precioInicial,
+  onClose,
+  onCreated,
+}: {
+  paqueteId: PaqueteId;
+  precioInicial: number;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [state, action, pending] = useActionState(createSolicitudAdminAction, null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const paquete = PAQUETES[paqueteId];
+
+  const copyLink = () => {
+    if (!state?.id) return;
+    navigator.clipboard.writeText(`${SITE_URL}/presupuesto/${state.id}`);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  if (state?.id) {
+    const presupuestoUrl = `${SITE_URL}/presupuesto/${state.id}`;
+    const waTexto = encodeURIComponent(
+      `Hola ${(state.nombre ?? "").split(" ")[0]} 😊\n\nDesde *Catering Profesional* te compartimos tu propuesta personalizada — *${state.paqueteNombre}*:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
+    );
+    const waUrl = `https://wa.me/${(state.telefono ?? "").replace(/\D/g, "")}?text=${waTexto}`;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="w-full max-w-md border border-white/10 p-8 flex flex-col items-center gap-5 text-center" style={{ background: "#0a0a0a" }}>
+          <span className="text-3xl">✓</span>
+          <div>
+            <p className="text-gold font-semibold">Presupuesto creado</p>
+            <p className="text-white/40 text-sm mt-1">{state.paqueteNombre} · {state.nombre}</p>
+          </div>
+
+          <div className="w-full border border-white/8 px-4 py-2 flex items-center gap-2">
+            <code className="flex-1 text-gold/70 text-xs truncate">{presupuestoUrl}</code>
+            <button onClick={copyLink} className="text-white/30 hover:text-white transition-colors p-1">
+              <Copy size={13} />
+            </button>
+          </div>
+          {copiedLink && <p className="text-emerald-400 text-xs -mt-3">¡Link copiado!</p>}
+
+          <div className="flex gap-3 w-full">
+            <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
+              <ExternalLink size={12} /> Ver PDF
+            </a>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+              <MessageSquare size={12} /> WhatsApp
+            </a>
+          </div>
+
+          <div className="flex gap-3 w-full pt-2 border-t border-white/6">
+            <button onClick={() => { onCreated(); }} className="flex-1 py-2 border border-white/10 text-white/40 hover:text-white text-xs transition-colors">
+              Cerrar y actualizar lista
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white/10" style={{ background: "#0a0a0a" }}>
+
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-white/8">
+          <div>
+            <p className="text-gold text-[10px] tracking-[0.4em] uppercase mb-1">Nuevo presupuesto</p>
+            <h3 className="text-white text-lg font-bold" style={{ fontFamily: "var(--font-display, serif)" }}>
+              {paquete?.nombre}
+            </h3>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form action={action} className="p-6 flex flex-col gap-4">
+          <input type="hidden" name="paquete" value={paqueteId} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Nombre del cliente *</label>
+              <input name="nombre" required placeholder="Nombre y apellido" className={inputAdmin} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">WhatsApp *</label>
+              <input name="telefono" required placeholder="+54 388..." className={inputAdmin} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Email</label>
+              <input type="email" name="email" placeholder="Opcional" className={inputAdmin} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Fecha del evento *</label>
+              <input type="date" name="fecha_evento" required className={inputAdmin} style={{ colorScheme: "dark" }} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Lugar *</label>
+              <input name="lugar" required placeholder="Salón, dirección..." className={inputAdmin} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Tipo de evento *</label>
+              <select name="tipo_evento" required className={`${inputAdmin} bg-[#111]`}>
+                <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná...</option>
+                {TIPOS_EVENTO_ADMIN.map(t => <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Invitados *</label>
+              <input type="number" min="1" name="invitados" required placeholder="Ej: 120" className={inputAdmin} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio / persona (ARS) *</label>
+              <input type="number" min="0" name="precio_override" defaultValue={precioInicial} required className={inputAdmin} />
+            </div>
+          </div>
+
+          {state?.error && <p className="text-red-400 text-xs">{state.error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-5 py-3 border border-white/10 text-white/40 hover:text-white text-sm transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" disabled={pending}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-50">
+              {pending ? "Creando..." : "Crear presupuesto →"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("galeria");
 
@@ -53,6 +201,15 @@ export default function AdminPage() {
   // presupuestos
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [solicitudAbierta, setSolicitudAbierta] = useState<string | null>(null);
+
+  // precios de paquetes
+  const [preciosMap, setPreciosMap] = useState<Record<string, number>>({});
+  const [editandoPrecio, setEditandoPrecio] = useState<string | null>(null);
+  const [nuevoPrecioInput, setNuevoPrecioInput] = useState("");
+  const [savingPrecio, setSavingPrecio] = useState(false);
+
+  // modal crear presupuesto rápido
+  const [crearParaPaquete, setCrearParaPaquete] = useState<PaqueteId | null>(null);
 
   // colaboradores
   const [guestUsers, setGuestUsers] = useState<GuestUser[]>([]);
@@ -77,6 +234,21 @@ export default function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setSubmissions(data);
+  };
+
+  const loadPrecios = async () => {
+    const precios = await getPaquetePreciosAction();
+    setPreciosMap(precios);
+  };
+
+  const handleGuardarPrecio = async (paqueteId: PaqueteId) => {
+    const precio = Number(nuevoPrecioInput.replace(/\D/g, ""));
+    if (isNaN(precio) || precio < 0) return;
+    setSavingPrecio(true);
+    await updatePaquetePrecioAction(paqueteId, precio);
+    setPreciosMap(prev => ({ ...prev, [paqueteId]: precio }));
+    setEditandoPrecio(null);
+    setSavingPrecio(false);
   };
 
   const loadGuestUsers = async () => {
@@ -123,7 +295,8 @@ export default function AdminPage() {
     loadItems();
     loadSubmissions();
     loadSolicitudes();
-  }, []);
+    loadPrecios();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (e: { preventDefault(): void }) => {
     e.preventDefault();
@@ -342,12 +515,113 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ── MODAL CREAR PRESUPUESTO RÁPIDO ── */}
+        {crearParaPaquete && (
+          <QuickPresupuestoModal
+            key={crearParaPaquete}
+            paqueteId={crearParaPaquete}
+            precioInicial={preciosMap[crearParaPaquete] ?? PAQUETES[crearParaPaquete]?.precio ?? 0}
+            onClose={() => setCrearParaPaquete(null)}
+            onCreated={() => { loadSolicitudes(); setCrearParaPaquete(null); }}
+          />
+        )}
+
         {/* ── TAB PRESUPUESTOS ── */}
         {tab === "presupuestos" && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-10">
+
+            {/* ── Paquetes vigentes ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-6">
+                <Package size={14} className="text-gold/60" />
+                <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">Paquetes vigentes</h2>
+              </div>
+
+              {(["cena", "lunch"] as const).map(tipo => (
+                <div key={tipo} className="mb-8">
+                  <p className="text-gold/40 text-[10px] tracking-[0.4em] uppercase mb-4">
+                    {tipo === "cena" ? "— Cenas —" : "— Lunch —"}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {PAQUETES_LISTA.filter(p => p.tipo === tipo).map(p => {
+                      const precio = preciosMap[p.id] ?? p.precio;
+                      const editando = editandoPrecio === p.id;
+                      return (
+                        <div key={p.id} className="border border-white/8 hover:border-white/15 transition-colors p-5 flex flex-col gap-4">
+                          <div>
+                            <p className="text-gold/50 text-[9px] tracking-[0.4em] uppercase">{tipo}</p>
+                            <h3 className="text-white font-semibold text-sm mt-0.5">{p.nombre}</h3>
+                          </div>
+
+                          <ul className="flex flex-col gap-1 flex-1">
+                            {p.resumen.slice(0, 3).map(item => (
+                              <li key={item} className="text-white/40 text-xs flex items-center gap-1.5">
+                                <span className="text-gold/40">✦</span> {item}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* Precio editable */}
+                          <div className="border-t border-white/6 pt-3">
+                            {editando ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-white/40 text-xs">$</span>
+                                <input
+                                  type="number"
+                                  value={nuevoPrecioInput}
+                                  onChange={e => setNuevoPrecioInput(e.target.value)}
+                                  className="flex-1 bg-transparent border border-gold/40 px-2 py-1 text-white text-sm focus:outline-none focus:border-gold"
+                                  placeholder={String(precio)}
+                                  autoFocus
+                                  onKeyDown={e => { if (e.key === "Enter") handleGuardarPrecio(p.id as PaqueteId); if (e.key === "Escape") setEditandoPrecio(null); }}
+                                />
+                                <button
+                                  onClick={() => handleGuardarPrecio(p.id as PaqueteId)}
+                                  disabled={savingPrecio}
+                                  className="px-2 py-1 bg-gold text-charcoal text-[10px] font-semibold hover:bg-gold-light transition-colors disabled:opacity-50"
+                                >
+                                  {savingPrecio ? "..." : "OK"}
+                                </button>
+                                <button onClick={() => setEditandoPrecio(null)} className="text-white/30 hover:text-white transition-colors">
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-white/25 text-[9px] tracking-widest uppercase">Precio / persona</p>
+                                  <p className="text-gold font-semibold text-sm">{formatPrecio(precio)}</p>
+                                </div>
+                                <button
+                                  onClick={() => { setEditandoPrecio(p.id); setNuevoPrecioInput(String(precio)); }}
+                                  title="Editar precio"
+                                  className="text-white/20 hover:text-gold transition-colors p-1"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => setCrearParaPaquete(p.id as PaqueteId)}
+                            className="w-full py-2.5 border border-gold/30 text-gold text-[10px] tracking-[0.4em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-200"
+                          >
+                            Crear presupuesto
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Solicitudes recibidas ── */}
+            <div className="border-t border-white/6 pt-8">
             <div className="flex items-center justify-between">
               <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">
-                Solicitudes de presupuesto ({solicitudes.length})
+                Solicitudes recibidas ({solicitudes.length})
               </h2>
               <div className="flex gap-3 text-xs text-white/30">
                 <span className="flex items-center gap-1"><Clock size={11} /> Pendientes: {solicitudes.filter(s => s.estado === "pendiente").length}</span>
@@ -449,6 +723,7 @@ export default function AdminPage() {
                 );
               })
             )}
+            </div>
           </div>
         )}
 
