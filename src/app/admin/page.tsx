@@ -3,12 +3,29 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock } from "lucide-react";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
+import { PAQUETES, formatPrecio, PRECIO_MINIMO_INVITADOS } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
 
-type Tab = "galeria" | "consultas" | "seguridad";
+type Tab = "galeria" | "consultas" | "presupuestos" | "seguridad";
+
+type Solicitud = {
+  id: string;
+  paquete: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  fecha_evento: string;
+  lugar: string;
+  tipo_evento: string;
+  invitados: number;
+  mensaje: string;
+  estado: "pendiente" | "enviado";
+  notas_admin: string;
+  created_at: string;
+};
 
 type Submission = {
   id: string;
@@ -32,6 +49,10 @@ export default function AdminPage() {
   // consultas
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
+  // presupuestos
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [solicitudAbierta, setSolicitudAbierta] = useState<string | null>(null);
+
   // cambio de contraseña
   const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
 
@@ -51,9 +72,23 @@ export default function AdminPage() {
     if (data) setSubmissions(data);
   };
 
+  const loadSolicitudes = async () => {
+    const { data } = await supabase
+      .from("presupuesto_solicitudes")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (data) setSolicitudes(data);
+  };
+
+  const marcarEnviado = async (id: string) => {
+    await supabase.from("presupuesto_solicitudes").update({ estado: "enviado" }).eq("id", id);
+    await loadSolicitudes();
+  };
+
   useEffect(() => {
     loadItems();
     loadSubmissions();
+    loadSolicitudes();
   }, []);
 
   const handleUpload = async (e: { preventDefault(): void }) => {
@@ -122,9 +157,10 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex border-b border-white/8 px-6">
         {([
-          ["galeria",   Image,         "Galería"],
-          ["consultas", MessageSquare, "Consultas"],
-          ["seguridad", Lock,          "Seguridad"],
+          ["galeria",      Image,         "Galería"],
+          ["consultas",    MessageSquare, "Consultas"],
+          ["presupuestos", FileText,      `Presupuestos${solicitudes.filter(s => s.estado === "pendiente").length ? ` (${solicitudes.filter(s => s.estado === "pendiente").length})` : ""}`],
+          ["seguridad",    Lock,          "Seguridad"],
         ] as const).map(([id, Icon, label]) => (
           <button
             key={id}
@@ -267,6 +303,116 @@ export default function AdminPage() {
                   </a>
                 </div>
               ))
+            )}
+          </div>
+        )}
+
+        {/* ── TAB PRESUPUESTOS ── */}
+        {tab === "presupuestos" && (
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">
+                Solicitudes de presupuesto ({solicitudes.length})
+              </h2>
+              <div className="flex gap-3 text-xs text-white/30">
+                <span className="flex items-center gap-1"><Clock size={11} /> Pendientes: {solicitudes.filter(s => s.estado === "pendiente").length}</span>
+                <span className="flex items-center gap-1"><CheckCircle size={11} /> Enviados: {solicitudes.filter(s => s.estado === "enviado").length}</span>
+              </div>
+            </div>
+
+            {solicitudes.length === 0 ? (
+              <p className="text-white/20 text-sm text-center py-12">No hay solicitudes aún</p>
+            ) : (
+              solicitudes.map((s) => {
+                const paquete = PAQUETES[s.paquete as keyof typeof PAQUETES];
+                const esGrande = s.invitados >= PRECIO_MINIMO_INVITADOS;
+                const total = esGrande && paquete ? formatPrecio(paquete.precio * s.invitados) : null;
+                const presupuestoUrl = `https://cateringprofesional.com.ar/presupuesto/${s.id}`;
+                const waTexto = encodeURIComponent(
+                  `Hola ${s.nombre.split(" ")[0]} 😊\n\nDesde *Catering Profesional* queremos agradecerte por elegirnos para tu evento.\n\nTe compartimos tu propuesta personalizada — *${paquete?.nombre ?? s.paquete}* para ${s.invitados} personas:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta no dudes en escribirnos. ¡Estamos a tu disposición!\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
+                );
+                const waUrl = `https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${waTexto}`;
+                const isOpen = solicitudAbierta === s.id;
+
+                return (
+                  <div key={s.id} className={`border transition-colors ${s.estado === "pendiente" ? "border-gold/20" : "border-white/8 opacity-60"}`}>
+                    {/* Fila resumen */}
+                    <div
+                      className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/2"
+                      onClick={() => setSolicitudAbierta(isOpen ? null : s.id)}
+                    >
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <span className={`text-[10px] tracking-wider px-2 py-0.5 border ${s.estado === "pendiente" ? "border-gold/40 text-gold" : "border-white/20 text-white/30"}`}>
+                          {s.estado === "pendiente" ? "PENDIENTE" : "ENVIADO"}
+                        </span>
+                        <div>
+                          <p className="text-white font-semibold text-sm">{s.nombre}</p>
+                          <p className="text-white/40 text-xs">{paquete?.nombre ?? s.paquete} · {s.invitados} personas · {s.tipo_evento}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {esGrande && total && (
+                          <span className="text-gold text-xs hidden sm:block">{total}</span>
+                        )}
+                        <span className="text-white/20 text-xs">
+                          {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                        </span>
+                        <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
+                      </div>
+                    </div>
+
+                    {/* Detalle expandido */}
+                    {isOpen && (
+                      <div className="border-t border-white/8 px-5 py-5 flex flex-col gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {[
+                            ["Fecha evento", new Date(s.fecha_evento + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })],
+                            ["Lugar", s.lugar],
+                            ["WhatsApp", s.telefono],
+                            ["Email", s.email],
+                            ["Invitados", `${s.invitados} personas`],
+                            ...(s.mensaje ? [["Comentarios", s.mensaje]] : []),
+                          ].map(([k, v]) => (
+                            <div key={k}>
+                              <p className="text-white/30 text-[10px] tracking-widest uppercase">{k}</p>
+                              <p className="text-white/80 text-xs mt-0.5">{v}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {esGrande ? (
+                          <div className="border border-gold/20 bg-gold/5 px-4 py-3 text-xs text-gold/80">
+                            ✦ Evento de {s.invitados} personas — el presupuesto ya incluye precio.
+                            {total && <span className="ml-2 font-bold text-gold">Total: {total}</span>}
+                          </div>
+                        ) : (
+                          <div className="border border-white/10 px-4 py-3 text-xs text-white/40">
+                            Evento de {s.invitados} personas (menos de {PRECIO_MINIMO_INVITADOS}). Revisá y completá el precio antes de enviar.
+                          </div>
+                        )}
+
+                        <div className="flex gap-3 flex-wrap">
+                          <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
+                            <ExternalLink size={13} /> Ver presupuesto
+                          </a>
+                          <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { if (s.estado === "pendiente") marcarEnviado(s.id); }}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+                            <MessageSquare size={13} /> Enviar por WhatsApp
+                          </a>
+                          {s.estado === "pendiente" && (
+                            <button onClick={() => marcarEnviado(s.id)}
+                              className="flex items-center gap-2 px-4 py-2 border border-white/10 text-white/30 hover:text-white text-xs tracking-wider transition-colors">
+                              <CheckCircle size={13} /> Marcar como enviado
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         )}

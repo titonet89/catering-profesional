@@ -3,6 +3,7 @@ import Hero            from "@/components/public/Hero";
 import ComoTrabajamos  from "@/components/public/ComoTrabajamos";
 import Services        from "@/components/public/Services";
 import BudgetBuilder   from "@/components/public/BudgetBuilder";
+import Presupuestos    from "@/components/public/Presupuestos";
 import Alquiler        from "@/components/public/Alquiler";
 import Galeria         from "@/components/public/Galeria";
 import Testimonios     from "@/components/public/Testimonios";
@@ -19,6 +20,7 @@ export default function HomePage() {
         <ComoTrabajamos />
         <Services />
         <BudgetBuilder />
+        <Presupuestos />
         <Alquiler />
         <Galeria />
         <Testimonios />
