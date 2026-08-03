@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy } from "lucide-react";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
+import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
 import { PAQUETES, formatPrecio, PRECIO_MINIMO_INVITADOS } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
 
-type Tab = "galeria" | "consultas" | "presupuestos" | "seguridad";
+type Tab = "galeria" | "consultas" | "presupuestos" | "seguridad" | "colaboradores";
 
 type Solicitud = {
   id: string;
@@ -53,6 +54,12 @@ export default function AdminPage() {
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [solicitudAbierta, setSolicitudAbierta] = useState<string | null>(null);
 
+  // colaboradores
+  const [guestUsers, setGuestUsers] = useState<GuestUser[]>([]);
+  const [guestUsersLoaded, setGuestUsersLoaded] = useState(false);
+  const [createGuestState, createGuestAction, createGuestPending] = useActionState(createGuestUserAction, null);
+  const [copied, setCopied] = useState(false);
+
   // cambio de contraseña
   const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
 
@@ -72,6 +79,23 @@ export default function AdminPage() {
     if (data) setSubmissions(data);
   };
 
+  const loadGuestUsers = async () => {
+    const users = await listGuestUsersAction();
+    setGuestUsers(users);
+    setGuestUsersLoaded(true);
+  };
+
+  const handleToggleGuest = async (id: string, activo: boolean) => {
+    await toggleGuestActiveAction(id, activo);
+    await loadGuestUsers();
+  };
+
+  const copyGuestUrl = () => {
+    navigator.clipboard.writeText("https://cateringprofesional.com.ar/invitado/login");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const loadSolicitudes = async () => {
     const { data } = await supabase
       .from("presupuesto_solicitudes")
@@ -84,6 +108,16 @@ export default function AdminPage() {
     await supabase.from("presupuesto_solicitudes").update({ estado: "enviado" }).eq("id", id);
     await loadSolicitudes();
   };
+
+  // Recargar colaboradores tras crear uno nuevo
+  useEffect(() => {
+    if (createGuestState?.success) loadGuestUsers();
+  }, [createGuestState?.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cargar colaboradores cuando se abre el tab (lazy)
+  useEffect(() => {
+    if (tab === "colaboradores" && !guestUsersLoaded) loadGuestUsers();
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadItems();
@@ -160,7 +194,8 @@ export default function AdminPage() {
           ["galeria",      Image,         "Galería"],
           ["consultas",    MessageSquare, "Consultas"],
           ["presupuestos", FileText,      `Presupuestos${solicitudes.filter(s => s.estado === "pendiente").length ? ` (${solicitudes.filter(s => s.estado === "pendiente").length})` : ""}`],
-          ["seguridad",    Lock,          "Seguridad"],
+          ["seguridad",       Lock,    "Seguridad"],
+          ["colaboradores",  Users,   "Colaboradores"],
         ] as const).map(([id, Icon, label]) => (
           <button
             key={id}
@@ -459,6 +494,123 @@ export default function AdminPage() {
                 {changePwdPending ? "Guardando..." : "Cambiar contraseña"}
               </button>
             </form>
+          </div>
+        )}
+
+        {/* ── TAB COLABORADORES ── */}
+        {tab === "colaboradores" && (
+          <div className="flex flex-col gap-10">
+
+            {/* Link de acceso */}
+            <div className="border border-white/8 p-5">
+              <p className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-3">Link del panel de colaborador</p>
+              <div className="flex items-center gap-3">
+                <code className="flex-1 bg-white/5 px-4 py-2 text-gold text-xs truncate">
+                  cateringprofesional.com.ar/invitado/login
+                </code>
+                <button
+                  onClick={copyGuestUrl}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors whitespace-nowrap"
+                >
+                  <Copy size={12} /> {copied ? "¡Copiado!" : "Copiar link"}
+                </button>
+                <a
+                  href="/invitado/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-gold/30 text-gold text-xs tracking-wider hover:bg-gold hover:text-charcoal transition-all"
+                >
+                  <ExternalLink size={12} /> Abrir
+                </a>
+              </div>
+              <p className="text-white/20 text-xs mt-2">
+                Pasale este link y sus credenciales al colaborador. No tiene acceso a ninguna función del panel admin.
+              </p>
+            </div>
+
+            {/* Crear colaborador */}
+            <div className="border border-white/8 p-6">
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-5">
+                <UserPlus size={11} className="inline mr-2" />Crear credencial de colaborador
+              </h2>
+              <form action={createGuestAction} className="flex flex-col gap-4 max-w-sm">
+                <input
+                  name="nombre"
+                  placeholder="Nombre del colaborador (ej: María López)"
+                  required
+                  className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                />
+                <input
+                  name="username"
+                  placeholder="Usuario (ej: maria — solo letras y números)"
+                  required
+                  pattern="[a-z0-9_]+"
+                  title="Solo letras minúsculas, números y guiones bajos"
+                  className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                />
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Contraseña (mín. 6 caracteres)"
+                  required
+                  minLength={6}
+                  className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                />
+
+                {createGuestState?.error   && <p className="text-red-400 text-xs">{createGuestState.error}</p>}
+                {createGuestState?.success && <p className="text-emerald-400 text-xs">✓ {createGuestState.success}</p>}
+
+                <button
+                  type="submit"
+                  disabled={createGuestPending}
+                  className="flex items-center justify-center gap-2 py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-50"
+                >
+                  <UserPlus size={14} /> {createGuestPending ? "Creando..." : "Crear colaborador"}
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de colaboradores */}
+            <div>
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-4">
+                Colaboradores ({guestUsers.length})
+              </h2>
+              {!guestUsersLoaded ? (
+                <p className="text-white/20 text-sm">Cargando...</p>
+              ) : guestUsers.length === 0 ? (
+                <p className="text-white/20 text-sm text-center py-10">No hay colaboradores creados aún</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {guestUsers.map(g => (
+                    <div
+                      key={g.id}
+                      className={`flex items-center justify-between px-5 py-4 border transition-colors ${g.activo ? "border-white/8" : "border-white/4 opacity-50"}`}
+                    >
+                      <div>
+                        <p className="text-white text-sm font-semibold">{g.nombre}</p>
+                        <p className="text-white/40 text-xs">@{g.username}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`text-[10px] tracking-widest px-2 py-0.5 border ${g.activo ? "border-emerald-500/40 text-emerald-400" : "border-white/15 text-white/30"}`}>
+                          {g.activo ? "ACTIVO" : "INACTIVO"}
+                        </span>
+                        <button
+                          onClick={() => handleToggleGuest(g.id, !g.activo)}
+                          title={g.activo ? "Desactivar acceso" : "Activar acceso"}
+                          className="text-white/30 hover:text-gold transition-colors"
+                        >
+                          {g.activo
+                            ? <ToggleRight size={22} className="text-emerald-400/70 hover:text-emerald-400" />
+                            : <ToggleLeft  size={22} />
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 

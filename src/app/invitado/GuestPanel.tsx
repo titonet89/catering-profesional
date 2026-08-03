@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LogOut, Plus, ExternalLink, Save, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  logoutGuestAction,
+  createSolicitudGuestAction,
+  updateSolicitudGuestAction,
+} from "@/app/actions/guest-auth";
+import { PAQUETES_LISTA, PAQUETES, type PaqueteId } from "@/data/paquetes";
+import type { GuestPayload } from "@/lib/guest-session";
+
+type Solicitud = {
+  id: string;
+  paquete: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  fecha_evento: string;
+  lugar: string;
+  tipo_evento: string;
+  invitados: number;
+  precio_override: number | null;
+  estado: string;
+  created_at: string;
+};
+
+const SITE_URL = "https://cateringprofesional.com.ar";
+const TIPOS_EVENTO = ["Boda", "Cumpleaños", "Evento corporativo", "Gala", "Quinceañero", "Bautismo", "Comunión", "Aniversario", "Otro"];
+const inputClass = "w-full bg-transparent border border-white/10 px-4 py-2.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors";
+
+// ── Fila editable por solicitud ─────────────────────────────────────────────
+function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
+  const router = useRouter();
+  const [isOpen, setIsOpen]     = useState(false);
+  const [updateState, updateAction, updatePending] = useActionState(updateSolicitudGuestAction, null);
+
+  const paquete        = PAQUETES[solicitud.paquete as PaqueteId];
+  const presupuestoUrl = `${SITE_URL}/presupuesto/${solicitud.id}`;
+  const waTexto        = encodeURIComponent(
+    `Hola ${solicitud.nombre.split(" ")[0]} 😊\n\nTe compartimos tu propuesta personalizada — *${paquete?.nombre ?? solicitud.paquete}*:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
+  );
+  const waUrl = `https://wa.me/${solicitud.telefono.replace(/\D/g, "")}?text=${waTexto}`;
+
+  // Cerrar y refrescar tras guardar con éxito
+  useEffect(() => {
+    if (updateState?.success) {
+      router.refresh();
+      setIsOpen(false);
+    }
+  }, [updateState?.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const precioPorPersona = solicitud.precio_override ?? (paquete?.precio ?? null);
+  const total = precioPorPersona ? precioPorPersona * solicitud.invitados : null;
+
+  return (
+    <div className="border border-white/8 hover:border-white/15 transition-colors">
+      {/* Encabezado */}
+      <div
+        className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/2 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div>
+          <p className="text-white text-sm font-semibold">{solicitud.nombre}</p>
+          <p className="text-white/40 text-xs mt-0.5">
+            {paquete?.nombre ?? solicitud.paquete} · {solicitud.invitados} personas · {solicitud.tipo_evento}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {total && (
+            <span className="text-gold text-xs hidden sm:block">
+              ${total.toLocaleString("es-AR")}
+            </span>
+          )}
+          <span className="text-white/25 text-xs">
+            {new Date(solicitud.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+          </span>
+          {isOpen
+            ? <ChevronUp size={14} className="text-white/30" />
+            : <ChevronDown size={14} className="text-white/30" />
+          }
+        </div>
+      </div>
+
+      {/* Formulario de edición */}
+      {isOpen && (
+        <div className="border-t border-white/8 px-5 py-5">
+          <form action={updateAction} className="flex flex-col gap-4">
+            <input type="hidden" name="id" value={solicitud.id} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Nombre del cliente</label>
+                <input name="nombre" defaultValue={solicitud.nombre} required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">WhatsApp</label>
+                <input name="telefono" defaultValue={solicitud.telefono} required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Email</label>
+                <input type="email" name="email" defaultValue={solicitud.email} required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Fecha del evento</label>
+                <input type="date" name="fecha_evento" defaultValue={solicitud.fecha_evento} required className={inputClass} style={{ colorScheme: "dark" }} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Lugar</label>
+                <input name="lugar" defaultValue={solicitud.lugar} required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Tipo de evento</label>
+                <select name="tipo_evento" defaultValue={solicitud.tipo_evento} className={`${inputClass} bg-[#111]`}>
+                  {TIPOS_EVENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Invitados</label>
+                <input type="number" min="1" name="invitados" defaultValue={solicitud.invitados} required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio por persona (ARS)</label>
+                <input type="number" min="0" name="precio_override" defaultValue={solicitud.precio_override ?? ""} placeholder="Ej: 59900" className={inputClass} />
+                <p className="text-white/20 text-[10px]">Si lo dejás vacío, se usa el precio base del paquete</p>
+              </div>
+            </div>
+
+            {updateState?.error   && <p className="text-red-400 text-xs">{updateState.error}</p>}
+            {updateState?.success && <p className="text-emerald-400 text-xs">✓ {updateState.success}</p>}
+
+            <div className="flex gap-3 flex-wrap items-center">
+              <button
+                type="submit"
+                disabled={updatePending}
+                className="flex items-center gap-2 px-4 py-2 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors disabled:opacity-50"
+              >
+                <Save size={13} /> {updatePending ? "Guardando..." : "Guardar cambios"}
+              </button>
+              <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors">
+                <ExternalLink size={13} /> Ver / imprimir PDF
+              </a>
+              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+                Enviar por WhatsApp
+              </a>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Formulario nuevo presupuesto ─────────────────────────────────────────────
+function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(createSolicitudGuestAction, null);
+
+  useEffect(() => {
+    if (state?.id) router.refresh();
+  }, [state?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (state?.id) {
+    return (
+      <div className="border border-gold/20 bg-gold/5 p-8 flex flex-col items-center gap-4 text-center">
+        <span className="text-3xl">✓</span>
+        <p className="text-gold text-sm font-semibold">Presupuesto creado correctamente</p>
+        <div className="flex gap-3">
+          <a
+            href={`${SITE_URL}/presupuesto/${state.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors"
+          >
+            <ExternalLink size={12} /> Ver presupuesto
+          </a>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className="border border-white/8 p-6 flex flex-col gap-4">
+      <h3 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-2">Nuevo presupuesto</h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Paquete *</label>
+          <select name="paquete" required className={`${inputClass} bg-[#111]`}>
+            <option value="">Seleccioná un paquete...</option>
+            {PAQUETES_LISTA.map(p => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Nombre del cliente *</label>
+          <input name="nombre" required placeholder="Nombre y apellido" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">WhatsApp *</label>
+          <input name="telefono" required placeholder="+54 388..." className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Email *</label>
+          <input type="email" name="email" required placeholder="email@ejemplo.com" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Fecha del evento *</label>
+          <input type="date" name="fecha_evento" required className={inputClass} style={{ colorScheme: "dark" }} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Lugar *</label>
+          <input name="lugar" required placeholder="Salón, dirección, localidad..." className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Tipo de evento *</label>
+          <select name="tipo_evento" required className={`${inputClass} bg-[#111]`}>
+            <option value="">Seleccioná...</option>
+            {TIPOS_EVENTO.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Cantidad de invitados *</label>
+          <input type="number" min="1" name="invitados" required placeholder="Ej: 120" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio por persona (ARS)</label>
+          <input type="number" min="0" name="precio_override" placeholder="Opcional — ej: 59900" className={inputClass} />
+        </div>
+      </div>
+
+      {state?.error && <p className="text-red-400 text-xs">{state.error}</p>}
+
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={pending}
+          className="flex items-center justify-center gap-2 flex-1 py-3 bg-gold text-charcoal font-semibold text-sm tracking-widest uppercase hover:bg-gold-light transition-colors disabled:opacity-50"
+        >
+          <Plus size={14} /> {pending ? "Creando..." : "Crear presupuesto"}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-5 py-3 border border-white/10 text-white/40 hover:text-white text-sm transition-colors"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ── Panel principal ──────────────────────────────────────────────────────────
+export default function GuestPanel({
+  session,
+  initialSolicitudes,
+}: {
+  session: GuestPayload;
+  initialSolicitudes: Solicitud[];
+}) {
+  const [showForm, setShowForm] = useState(false);
+
+  return (
+    <div className="min-h-screen" style={{ background: "#0a0a0a", color: "white" }}>
+
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+        <div>
+          <span className="text-gold/70 text-[10px] tracking-[0.5em] uppercase">Panel de Colaborador</span>
+          <h1 className="text-white font-bold tracking-wide" style={{ fontFamily: "var(--font-display, serif)" }}>
+            {session.nombre}
+          </h1>
+        </div>
+        <form action={logoutGuestAction}>
+          <button type="submit" className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors">
+            <LogOut size={15} /> Salir
+          </button>
+        </form>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-6 py-10 flex flex-col gap-6">
+
+        {/* Encabezado de sección */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">
+              Mis presupuestos
+            </h2>
+            <p className="text-white/20 text-xs mt-1">{initialSolicitudes.length} presupuesto{initialSolicitudes.length !== 1 ? "s" : ""}</p>
+          </div>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gold/40 text-gold text-xs tracking-wider hover:bg-gold hover:text-charcoal transition-all duration-200"
+            >
+              <Plus size={13} /> Nuevo presupuesto
+            </button>
+          )}
+        </div>
+
+        {/* Formulario nuevo */}
+        {showForm && (
+          <NuevaSolicitudForm onClose={() => setShowForm(false)} />
+        )}
+
+        {/* Lista */}
+        {initialSolicitudes.length === 0 && !showForm ? (
+          <div className="border border-white/5 py-20 text-center">
+            <p className="text-white/20 text-sm">No tenés presupuestos aún.</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-4 text-gold/60 hover:text-gold text-xs tracking-wider underline underline-offset-4 transition-colors"
+            >
+              Crear el primero
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {initialSolicitudes.map(s => (
+              <SolicitudRow key={s.id} solicitud={s} />
+            ))}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
