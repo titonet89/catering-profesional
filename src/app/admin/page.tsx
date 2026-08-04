@@ -387,7 +387,7 @@ export default function AdminPage() {
       </header>
 
       {/* Tabs */}
-      <div className="flex border-b border-white/8 px-6">
+      <div className="flex border-b border-white/8 px-2 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {([
           ["galeria",      Image,         "Galería"],
           ["consultas",    MessageSquare, "Consultas"],
@@ -398,11 +398,13 @@ export default function AdminPage() {
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm tracking-wider border-b-2 transition-colors ${
+            title={label}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm tracking-wider border-b-2 transition-colors shrink-0 whitespace-nowrap ${
               tab === id ? "border-gold text-gold" : "border-transparent text-white/40 hover:text-white"
             }`}
           >
-            <Icon size={15} /> {label}
+            <Icon size={14} />
+            <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
       </div>

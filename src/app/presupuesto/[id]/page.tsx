@@ -52,24 +52,28 @@ export default async function PresupuestoPage({ params }: Params) {
         <PrintButton />
       </div>
 
-      <div style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
+      <div className="pres-pad" style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
 
         {/* Header */}
         <div style={{ textAlign: "center", borderBottom: "2px solid #8B4513", paddingBottom: 28, marginBottom: 32 }}>
-          <p style={{ color: "#8B4513", fontSize: 10, letterSpacing: 6, textTransform: "uppercase", margin: "0 0 6px" }}>
-            Catering Profesional · Eventos & Gastronomía
+          <img src="/logo.svg" alt="" style={{ height: 90, width: "auto", marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
+          <p style={{ color: "#8B4513", fontSize: 11, letterSpacing: 5, textTransform: "uppercase", margin: "0 0 2px", fontWeight: 700 }}>
+            Catering Profesional
           </p>
-          <h1 style={{ fontSize: 48, color: "#5C2E0A", margin: "0 0 4px", fontWeight: 900, letterSpacing: 2 }}>
+          <p style={{ color: "#8B4513", fontSize: 9, letterSpacing: 4, textTransform: "uppercase", margin: "0 0 16px", opacity: 0.7 }}>
+            Eventos & Gastronomía · Jujuy
+          </p>
+          <h1 style={{ fontSize: 40, color: "#5C2E0A", margin: "0 0 4px", fontWeight: 900, letterSpacing: 4 }}>
             PRESUPUESTO
           </h1>
-          <p style={{ fontSize: 22, color: "#8B4513", fontStyle: "italic", margin: "0 0 8px" }}>
+          <p style={{ fontSize: 20, color: "#8B4513", fontStyle: "italic", margin: "0 0 8px" }}>
             {paquete.nombre}
           </p>
           <p style={{ color: "#aaa", fontSize: 11, margin: 0 }}>N° {nroPedido}</p>
         </div>
 
         {/* Datos del cliente */}
-        <div style={{
+        <div className="pres-2col" style={{
           display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28,
           border: "1px solid #C9A84C33", padding: 20, background: "#fff8f0",
         }}>
@@ -133,7 +137,7 @@ export default async function PresupuestoPage({ params }: Params) {
         </div>
 
         {/* Bebidas y Servicios */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
+        <div className="pres-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
           <div>
             <p style={{ color: "#8B4513", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontWeight: 700, margin: "0 0 8px", borderBottom: "1px solid #C9A84C44", paddingBottom: 4 }}>
               Bebidas
@@ -153,7 +157,7 @@ export default async function PresupuestoPage({ params }: Params) {
         </div>
 
         {/* Precio */}
-        <div style={{ display: "grid", gridTemplateColumns: precioPorPersona ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 32 }}>
+        <div className="pres-2col" style={{ display: "grid", gridTemplateColumns: precioPorPersona ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 32 }}>
           {precioPorPersona ? (
             <>
               <div style={{ border: "1px solid #C9A84C", padding: 20, textAlign: "center", background: "#fff8f0" }}>
@@ -206,7 +210,13 @@ export default async function PresupuestoPage({ params }: Params) {
         </div>
       </div>
 
-      <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #f5f0e8; } }`}</style>
+      <style>{`
+        @media print { .print\\:hidden { display: none !important; } body { background: #f5f0e8; } }
+        @media (max-width: 600px) {
+          .pres-2col { grid-template-columns: 1fr !important; }
+          .pres-pad  { padding: 20px 14px !important; }
+        }
+      `}</style>
     </div>
   );
 }

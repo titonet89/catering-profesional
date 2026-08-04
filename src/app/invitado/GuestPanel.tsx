@@ -150,20 +150,20 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
             {updateState?.error   && <p className="text-red-400 text-xs">{updateState.error}</p>}
             {updateState?.success && <p className="text-emerald-400 text-xs">✓ {updateState.success}</p>}
 
-            <div className="flex gap-3 flex-wrap items-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 type="submit"
                 disabled={updatePending}
-                className="flex items-center gap-2 px-4 py-2 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors disabled:opacity-50"
               >
                 <Save size={13} /> {updatePending ? "Guardando..." : "Guardar cambios"}
               </button>
               <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors">
+                className="flex items-center justify-center gap-2 py-2.5 px-4 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors">
                 <ExternalLink size={13} /> Ver / imprimir PDF
               </a>
               <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
                 Enviar por WhatsApp
               </a>
             </div>
@@ -304,21 +304,21 @@ export default function GuestPanel({
     <div className="min-h-screen" style={{ background: "#0a0a0a", color: "white" }}>
 
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/8">
         <div>
-          <span className="text-gold/70 text-[10px] tracking-[0.5em] uppercase">Panel de Colaborador</span>
-          <h1 className="text-white font-bold tracking-wide" style={{ fontFamily: "var(--font-display, serif)" }}>
+          <span className="text-gold/70 text-[10px] tracking-[0.5em] uppercase">Colaborador</span>
+          <h1 className="text-white font-bold tracking-wide text-base sm:text-lg" style={{ fontFamily: "var(--font-display, serif)" }}>
             {session.nombre}
           </h1>
         </div>
         <form action={logoutGuestAction}>
-          <button type="submit" className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors">
-            <LogOut size={15} /> Salir
+          <button type="submit" className="flex items-center gap-1.5 text-white/40 hover:text-white text-sm transition-colors">
+            <LogOut size={14} /> <span className="hidden sm:inline">Salir</span>
           </button>
         </form>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 flex flex-col gap-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* Encabezado de sección */}
         <div className="flex items-center justify-between">
