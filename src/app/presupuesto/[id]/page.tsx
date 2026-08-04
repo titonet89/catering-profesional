@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { PAQUETES, formatPrecio, PRECIO_MINIMO_INVITADOS } from "@/data/paquetes";
+import PrintButton from "./PrintButton";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -48,13 +49,7 @@ export default async function PresupuestoPage({ params }: Params) {
         >
           Contactar por WhatsApp
         </a>
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 text-xs"
-          style={{ background: "#C9A84C", color: "#111", cursor: "pointer", border: "none" }}
-        >
-          Guardar como PDF
-        </button>
+        <PrintButton />
       </div>
 
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "40px 24px" }}>
@@ -179,6 +174,16 @@ export default async function PresupuestoPage({ params }: Params) {
             </div>
           )}
         </div>
+
+        {/* Notas adicionales del colaborador / admin */}
+        {solicitud.notas_admin && (
+          <div style={{ border: "1px solid #C9A84C33", padding: 16, background: "#fff8f0", marginBottom: 20 }}>
+            <p style={{ color: "#8B4513", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 8px", fontWeight: 700 }}>
+              Notas y personalizaciones
+            </p>
+            <p style={{ color: "#444", fontSize: 13, margin: 0, whiteSpace: "pre-line" }}>{solicitud.notas_admin}</p>
+          </div>
+        )}
 
         {/* Nota precios */}
         <p style={{ color: "#aaa", fontSize: 11, textAlign: "center", marginBottom: 32 }}>

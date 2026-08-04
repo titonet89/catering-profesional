@@ -8,6 +8,16 @@ import { signGuestToken, verifyGuestToken, GUEST_SESSION_EXPIRY } from "@/lib/gu
 import { getSession } from "./auth";
 import type { PaqueteId } from "@/data/paquetes";
 
+// Acepta "$ 59.900", "59.900", "59900", "59,900" → 59900
+function parsePrice(raw: FormDataEntryValue | null): number | null {
+  if (!raw) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  const clean = str.replace(/[$\s]/g, "").replace(/\./g, "").replace(",", "");
+  const n = parseInt(clean, 10);
+  return isNaN(n) || n < 0 ? null : n;
+}
+
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
 export type GuestUser = {
@@ -145,9 +155,8 @@ export async function createSolicitudGuestAction(
   const fecha_evento = (formData.get("fecha_evento") as string) ?? "";
   const lugar       = ((formData.get("lugar")       as string) ?? "").trim();
   const tipo_evento  = (formData.get("tipo_evento")  as string) ?? "";
-  const invitados   = Number(formData.get("invitados") ?? 0);
-  const precioRaw   = formData.get("precio_override");
-  const precio_override = precioRaw && String(precioRaw).trim() !== "" ? Number(precioRaw) : null;
+  const invitados      = Number(formData.get("invitados") ?? 0);
+  const precio_override = parsePrice(formData.get("precio_override"));
 
   if (!paquete || !nombre || !email || !telefono || !fecha_evento || !lugar || !tipo_evento || !invitados) {
     return { error: "Completá todos los campos obligatorios" };
@@ -184,9 +193,9 @@ export async function updateSolicitudGuestAction(
   const fecha_evento = (formData.get("fecha_evento") as string) ?? "";
   const lugar       = ((formData.get("lugar")       as string) ?? "").trim();
   const tipo_evento  = (formData.get("tipo_evento")  as string) ?? "";
-  const invitados   = Number(formData.get("invitados") ?? 0);
-  const precioRaw   = formData.get("precio_override");
-  const precio_override = precioRaw && String(precioRaw).trim() !== "" ? Number(precioRaw) : null;
+  const invitados      = Number(formData.get("invitados") ?? 0);
+  const precio_override = parsePrice(formData.get("precio_override"));
+  const notas_admin    = ((formData.get("notas_admin") as string) ?? "").trim();
 
   if (!id) return { error: "ID inválido" };
 
@@ -205,7 +214,7 @@ export async function updateSolicitudGuestAction(
 
   const { error } = await db
     .from("presupuesto_solicitudes")
-    .update({ nombre, email, telefono, fecha_evento, lugar, tipo_evento, invitados, precio_override })
+    .update({ nombre, email, telefono, fecha_evento, lugar, tipo_evento, invitados, precio_override, notas_admin })
     .eq("id", id)
     .eq("guest_id", session.guestId);
 

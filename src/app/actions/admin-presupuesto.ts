@@ -4,6 +4,15 @@ import { getSession } from "./auth";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { PAQUETES, type PaqueteId } from "@/data/paquetes";
 
+function parsePrice(raw: FormDataEntryValue | null): number | null {
+  if (!raw) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  const clean = str.replace(/[$\s]/g, "").replace(/\./g, "").replace(",", "");
+  const n = parseInt(clean, 10);
+  return isNaN(n) || n < 0 ? null : n;
+}
+
 // ─── Precios configurables por paquete ────────────────────────────────────
 
 function precioKey(id: PaqueteId) {
@@ -68,9 +77,8 @@ export async function createSolicitudAdminAction(
   const fecha_evento = (formData.get("fecha_evento") as string) ?? "";
   const lugar       = ((formData.get("lugar")        as string) ?? "").trim();
   const tipo_evento  = (formData.get("tipo_evento")  as string) ?? "";
-  const invitados   = Number(formData.get("invitados") ?? 0);
-  const precioRaw   = formData.get("precio_override");
-  const precio_override = precioRaw && String(precioRaw).trim() !== "" ? Number(precioRaw) : null;
+  const invitados      = Number(formData.get("invitados") ?? 0);
+  const precio_override = parsePrice(formData.get("precio_override"));
 
   if (!paqueteId || !nombre || !telefono || !fecha_evento || !lugar || !tipo_evento || !invitados) {
     return { error: "Completá todos los campos obligatorios" };

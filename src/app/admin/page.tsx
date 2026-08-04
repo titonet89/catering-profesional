@@ -42,6 +42,13 @@ const SITE_URL = "https://cateringprofesional.com.ar";
 const TIPOS_EVENTO_ADMIN = ["Boda", "Cumpleaños", "Evento corporativo", "Gala", "Quinceañero", "Bautismo", "Comunión", "Aniversario", "Otro"];
 const inputAdmin = "w-full bg-transparent border border-white/10 px-4 py-2.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors";
 
+function toWAPhone(phone: string): string {
+  const d = phone.replace(/\D/g, "");
+  if (d.startsWith("54")) return d;
+  if (d.startsWith("0"))  return "54" + d.slice(1);
+  return "54" + d;
+}
+
 function QuickPresupuestoModal({
   paqueteId,
   precioInicial,
@@ -70,7 +77,7 @@ function QuickPresupuestoModal({
     const waTexto = encodeURIComponent(
       `Hola ${(state.nombre ?? "").split(" ")[0]} 😊\n\nDesde *Catering Profesional* te compartimos tu propuesta personalizada — *${state.paqueteNombre}*:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
     );
-    const waUrl = `https://wa.me/${(state.telefono ?? "").replace(/\D/g, "")}?text=${waTexto}`;
+    const waUrl = `https://wa.me/${toWAPhone(state.telefono ?? "")}?text=${waTexto}`;
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -164,7 +171,8 @@ function QuickPresupuestoModal({
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio / persona (ARS) *</label>
-              <input type="number" min="0" name="precio_override" defaultValue={precioInicial} required className={inputAdmin} />
+              <input type="text" inputMode="numeric" name="precio_override" defaultValue={precioInicial} required className={inputAdmin} placeholder="Ej: 59900" />
+              <p className="text-white/20 text-[10px]">Solo números — ej: 59900</p>
             </div>
           </div>
 
@@ -640,7 +648,7 @@ export default function AdminPage() {
                 const waTexto = encodeURIComponent(
                   `Hola ${s.nombre.split(" ")[0]} 😊\n\nDesde *Catering Profesional* queremos agradecerte por elegirnos para tu evento.\n\nTe compartimos tu propuesta personalizada — *${paquete?.nombre ?? s.paquete}* para ${s.invitados} personas:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta no dudes en escribirnos. ¡Estamos a tu disposición!\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
                 );
-                const waUrl = `https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${waTexto}`;
+                const waUrl = `https://wa.me/${toWAPhone(s.telefono)}?text=${waTexto}`;
                 const isOpen = solicitudAbierta === s.id;
 
                 return (

@@ -22,9 +22,17 @@ type Solicitud = {
   tipo_evento: string;
   invitados: number;
   precio_override: number | null;
+  notas_admin: string;
   estado: string;
   created_at: string;
 };
+
+function toWAPhone(phone: string): string {
+  const d = phone.replace(/\D/g, "");
+  if (d.startsWith("54")) return d;
+  if (d.startsWith("0"))  return "54" + d.slice(1);
+  return "54" + d;
+}
 
 const SITE_URL = "https://cateringprofesional.com.ar";
 const TIPOS_EVENTO = ["Boda", "Cumpleaños", "Evento corporativo", "Gala", "Quinceañero", "Bautismo", "Comunión", "Aniversario", "Otro"];
@@ -41,7 +49,7 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
   const waTexto        = encodeURIComponent(
     `Hola ${solicitud.nombre.split(" ")[0]} 😊\n\nTe compartimos tu propuesta personalizada — *${paquete?.nombre ?? solicitud.paquete}*:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
   );
-  const waUrl = `https://wa.me/${solicitud.telefono.replace(/\D/g, "")}?text=${waTexto}`;
+  const waUrl = `https://wa.me/${toWAPhone(solicitud.telefono)}?text=${waTexto}`;
 
   // Cerrar y refrescar tras guardar con éxito
   useEffect(() => {
@@ -122,9 +130,21 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio por persona (ARS)</label>
-                <input type="number" min="0" name="precio_override" defaultValue={solicitud.precio_override ?? ""} placeholder="Ej: 59900" className={inputClass} />
-                <p className="text-white/20 text-[10px]">Si lo dejás vacío, se usa el precio base del paquete</p>
+                <input type="text" inputMode="numeric" name="precio_override" defaultValue={solicitud.precio_override ?? ""} placeholder="Ej: 59900" className={inputClass} />
+                <p className="text-white/20 text-[10px]">Sin puntos ni comas — ej: 59900. Vacío = precio base del paquete</p>
               </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-white/30 text-[10px] tracking-widest uppercase">Notas y personalizaciones del servicio</label>
+              <textarea
+                name="notas_admin"
+                defaultValue={solicitud.notas_admin ?? ""}
+                placeholder="Ej: Se agrega entrada de empanadas · Sin gluten para 5 personas · Decoración temática floral..."
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+              <p className="text-white/20 text-[10px]">Aparecen en el PDF del presupuesto bajo &quot;Notas y personalizaciones&quot;</p>
             </div>
 
             {updateState?.error   && <p className="text-red-400 text-xs">{updateState.error}</p>}
@@ -235,7 +255,8 @@ function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio por persona (ARS)</label>
-          <input type="number" min="0" name="precio_override" placeholder="Opcional — ej: 59900" className={inputClass} />
+          <input type="text" inputMode="numeric" name="precio_override" placeholder="Ej: 59900 (opcional)" className={inputClass} />
+          <p className="text-white/20 text-[10px]">Solo números — ej: 59900</p>
         </div>
       </div>
 
