@@ -101,6 +101,7 @@ export async function createSolicitudAdminAction(
   const tipo_evento  = (formData.get("tipo_evento")  as string) ?? "";
   const invitados      = Number(formData.get("invitados") ?? 0);
   const precio_override = parsePrice(formData.get("precio_override"));
+  const notas_admin     = ((formData.get("notas_admin") as string) ?? "").trim();
 
   if (!paqueteId || !nombre || !telefono || !fecha_evento || !lugar || !tipo_evento || !invitados) {
     return { error: "Completá todos los campos obligatorios" };
@@ -122,6 +123,7 @@ export async function createSolicitudAdminAction(
       tipo_evento,
       invitados,
       precio_override,
+      notas_admin,
       mensaje:  "",
       estado:   "pendiente",
       guest_id: null,
@@ -132,4 +134,31 @@ export async function createSolicitudAdminAction(
   if (error || !data) return { error: "Error al crear el presupuesto" };
 
   return { id: data.id, nombre, telefono, paqueteNombre: paquete.nombre };
+}
+
+// ─── Aprobar / rechazar solicitud de colaborador ──────────────────────────────
+
+export async function aprobarSolicitudAction(id: string): Promise<{ error?: string }> {
+  const isAdmin = await getSession();
+  if (!isAdmin) return { error: "No autorizado" };
+  const db = supabaseAdmin();
+  const { error } = await db
+    .from("presupuesto_solicitudes")
+    .update({ estado: "aprobado" })
+    .eq("id", id);
+  return error ? { error: "Error al aprobar" } : {};
+}
+
+export async function rechazarSolicitudAction(
+  id: string,
+  rechazo_nota: string
+): Promise<{ error?: string }> {
+  const isAdmin = await getSession();
+  if (!isAdmin) return { error: "No autorizado" };
+  const db = supabaseAdmin();
+  const { error } = await db
+    .from("presupuesto_solicitudes")
+    .update({ estado: "rechazado", rechazo_nota })
+    .eq("id", id);
+  return error ? { error: "Error al rechazar" } : {};
 }

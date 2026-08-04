@@ -170,7 +170,7 @@ export async function createSolicitudGuestAction(
     .from("presupuesto_solicitudes")
     .insert([{
       paquete, nombre, email, telefono, fecha_evento, lugar, tipo_evento,
-      invitados, precio_override, mensaje: "", estado: "pendiente",
+      invitados, precio_override, mensaje: "", estado: "pendiente_aprobacion",
       guest_id: session.guestId,
     }])
     .select("id")
@@ -207,7 +207,7 @@ export async function updateSolicitudGuestAction(
   // Verificar propiedad — el invitado solo puede modificar sus propias solicitudes
   const { data: existing } = await db
     .from("presupuesto_solicitudes")
-    .select("guest_id")
+    .select("guest_id, estado")
     .eq("id", id)
     .single();
 
@@ -215,9 +215,12 @@ export async function updateSolicitudGuestAction(
     return { error: "No tenés permiso para modificar este presupuesto" };
   }
 
+  // Si fue rechazado y el colaborador lo edita, vuelve a pendiente de aprobación
+  const estadoReset = existing.estado === "rechazado" ? { estado: "pendiente_aprobacion" } : {};
+
   const { error } = await db
     .from("presupuesto_solicitudes")
-    .update({ nombre, email, telefono, fecha_evento, lugar, tipo_evento, invitados, precio_override, notas_admin })
+    .update({ nombre, email, telefono, fecha_evento, lugar, tipo_evento, invitados, precio_override, notas_admin, ...estadoReset })
     .eq("id", id)
     .eq("guest_id", session.guestId);
 

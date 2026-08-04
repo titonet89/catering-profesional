@@ -23,8 +23,17 @@ type Solicitud = {
   invitados: number;
   precio_override: number | null;
   notas_admin: string;
+  rechazo_nota?: string;
   estado: string;
   created_at: string;
+};
+
+const ESTADO_BADGE: Record<string, { label: string; cls: string }> = {
+  pendiente_aprobacion: { label: "Esperando aprobación", cls: "border-amber-400/40 text-amber-400" },
+  aprobado:             { label: "Aprobado ✓",           cls: "border-emerald-500/40 text-emerald-400" },
+  rechazado:            { label: "Rechazado",             cls: "border-red-400/40 text-red-400" },
+  enviado:              { label: "Enviado",               cls: "border-white/20 text-white/40" },
+  pendiente:            { label: "Pendiente",             cls: "border-white/20 text-white/40" },
 };
 
 function toWAPhone(phone: string): string {
@@ -70,8 +79,15 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <div>
-          <p className="text-white text-sm font-semibold">{solicitud.nombre}</p>
-          <p className="text-white/40 text-xs mt-0.5">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <p className="text-white text-sm font-semibold">{solicitud.nombre}</p>
+            {ESTADO_BADGE[solicitud.estado] && (
+              <span className={`text-[9px] tracking-widest px-2 py-0.5 border uppercase ${ESTADO_BADGE[solicitud.estado].cls}`}>
+                {ESTADO_BADGE[solicitud.estado].label}
+              </span>
+            )}
+          </div>
+          <p className="text-white/40 text-xs">
             {paquete?.nombre ?? solicitud.paquete} · {solicitud.invitados} personas · {solicitud.tipo_evento}
           </p>
         </div>
@@ -150,22 +166,37 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
             {updateState?.error   && <p className="text-red-400 text-xs">{updateState.error}</p>}
             {updateState?.success && <p className="text-emerald-400 text-xs">✓ {updateState.success}</p>}
 
+            {solicitud.estado === "rechazado" && solicitud.rechazo_nota && (
+              <div className="border border-red-400/30 bg-red-400/5 px-4 py-3 rounded">
+                <p className="text-red-400 text-[10px] tracking-widest uppercase mb-1">Motivo del rechazo</p>
+                <p className="text-white/70 text-xs">{solicitud.rechazo_nota}</p>
+                <p className="text-white/30 text-[10px] mt-2">Editá los campos y guardá para volver a enviar para aprobación.</p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 type="submit"
                 disabled={updatePending}
                 className="flex items-center justify-center gap-2 py-2.5 px-4 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors disabled:opacity-50"
               >
-                <Save size={13} /> {updatePending ? "Guardando..." : "Guardar cambios"}
+                <Save size={13} /> {updatePending ? "Guardando..." : solicitud.estado === "rechazado" ? "Guardar y reenviar" : "Guardar cambios"}
               </button>
               <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 py-2.5 px-4 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors">
-                <ExternalLink size={13} /> Ver / imprimir PDF
+                <ExternalLink size={13} /> Ver PDF
               </a>
-              <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
-                Enviar por WhatsApp
-              </a>
+              {solicitud.estado === "aprobado" && (
+                <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+                  Enviar al cliente
+                </a>
+              )}
+              {solicitud.estado === "pendiente_aprobacion" && (
+                <span className="flex items-center justify-center gap-2 py-2.5 px-4 border border-amber-400/30 text-amber-400/70 text-xs">
+                  ⏳ Esperando aprobación del admin
+                </span>
+              )}
             </div>
           </form>
         </div>
@@ -193,13 +224,16 @@ function NuevaSolicitudForm({ onClose, session }: { onClose: () => void; session
       : null;
 
     return (
-      <div className="border border-gold/20 bg-gold/5 p-8 flex flex-col items-center gap-4 text-center">
-        <span className="text-3xl">✓</span>
-        <p className="text-gold text-sm font-semibold">Presupuesto creado correctamente</p>
+      <div className="border border-amber-400/20 bg-amber-400/5 p-8 flex flex-col items-center gap-4 text-center">
+        <span className="text-3xl">⏳</span>
+        <div>
+          <p className="text-amber-400 text-sm font-semibold">Presupuesto enviado para aprobación</p>
+          <p className="text-white/30 text-xs mt-1">El administrador lo revisará y recibirás la confirmación.</p>
+        </div>
         <div className="flex gap-3 flex-wrap justify-center">
           <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
-            <ExternalLink size={12} /> Ver presupuesto
+            <ExternalLink size={12} /> Vista previa
           </a>
           {waPropio && (
             <a href={waPropio} target="_blank" rel="noopener noreferrer"

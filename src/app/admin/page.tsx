@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus } from "lucide-react";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
-import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction } from "@/app/actions/admin-presupuesto";
+import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction, aprobarSolicitudAction, rechazarSolicitudAction } from "@/app/actions/admin-presupuesto";
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
@@ -24,8 +24,10 @@ type Solicitud = {
   tipo_evento: string;
   invitados: number;
   mensaje: string;
-  estado: "pendiente" | "enviado";
+  estado: "pendiente" | "enviado" | "pendiente_aprobacion" | "aprobado" | "rechazado";
   notas_admin: string;
+  rechazo_nota?: string;
+  guest_id: string | null;
   created_at: string;
 };
 
@@ -56,16 +58,17 @@ function QuickPresupuestoModal({
   onClose,
   onCreated,
 }: {
-  paqueteId: PaqueteId;
-  precioInicial: number;
+  paqueteId?: PaqueteId;
+  precioInicial?: number;
   adminWA: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const [state, action, pending] = useActionState(createSolicitudAdminAction, null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedPaquete, setSelectedPaquete] = useState<PaqueteId | "">(paqueteId ?? "");
 
-  const paquete = PAQUETES[paqueteId];
+  const paquete = PAQUETES[selectedPaquete as PaqueteId];
 
   const copyLink = () => {
     if (!state?.id) return;
@@ -138,7 +141,7 @@ function QuickPresupuestoModal({
           <div>
             <p className="text-gold text-[10px] tracking-[0.4em] uppercase mb-1">Nuevo presupuesto</p>
             <h3 className="text-white text-lg font-bold" style={{ fontFamily: "var(--font-display, serif)" }}>
-              {paquete?.nombre}
+              {paquete?.nombre ?? "Presupuesto personalizado"}
             </h3>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white transition-colors p-1">
@@ -147,7 +150,26 @@ function QuickPresupuestoModal({
         </div>
 
         <form action={action} className="p-6 flex flex-col gap-4">
-          <input type="hidden" name="paquete" value={paqueteId} />
+          {paqueteId
+            ? <input type="hidden" name="paquete" value={paqueteId} />
+            : (
+              <div className="flex flex-col gap-1">
+                <label className="text-white/30 text-[10px] tracking-widest uppercase">Paquete *</label>
+                <select
+                  name="paquete"
+                  required
+                  value={selectedPaquete}
+                  onChange={e => setSelectedPaquete(e.target.value as PaqueteId)}
+                  className={`${inputAdmin} bg-[#111]`}
+                >
+                  <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná un paquete...</option>
+                  {PAQUETES_LISTA.map(p => (
+                    <option key={p.id} value={p.id} style={{ background: "#111", color: "#fff" }}>{p.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            )
+          }
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
@@ -183,9 +205,20 @@ function QuickPresupuestoModal({
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio / persona (ARS) *</label>
-              <input type="text" inputMode="numeric" name="precio_override" defaultValue={precioInicial} required className={inputAdmin} placeholder="Ej: 59900" />
+              <input type="text" inputMode="numeric" name="precio_override" defaultValue={precioInicial ?? ""} required className={inputAdmin} placeholder="Ej: 59900" />
               <p className="text-white/20 text-[10px]">Solo números — ej: 59900</p>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white/30 text-[10px] tracking-widest uppercase">Personalización / notas del servicio</label>
+            <textarea
+              name="notas_admin"
+              rows={3}
+              placeholder="Ej: Se agrega entrada de empanadas · Sin gluten para 5 personas · Decoración floral..."
+              className={`${inputAdmin} resize-none`}
+            />
+            <p className="text-white/20 text-[10px]">Aparece en el PDF bajo &quot;Notas y personalizaciones&quot;</p>
           </div>
 
           {state?.error && <p className="text-red-400 text-xs">{state.error}</p>}
@@ -230,6 +263,11 @@ export default function AdminPage() {
 
   // modal crear presupuesto rápido
   const [crearParaPaquete, setCrearParaPaquete] = useState<PaqueteId | null>(null);
+  const [crearAbierto, setCrearAbierto] = useState(false);
+
+  // aprobación de colaboradores
+  const [rechazandoId, setRechazandoId]   = useState<string | null>(null);
+  const [rechazoNota,  setRechazoNota]    = useState("");
 
   // colaboradores
   const [guestUsers, setGuestUsers] = useState<GuestUser[]>([]);
@@ -284,6 +322,19 @@ export default function AdminPage() {
   const handleToggleGuest = async (id: string, activo: boolean) => {
     await toggleGuestActiveAction(id, activo);
     await loadGuestUsers();
+  };
+
+  const handleAprobar = async (id: string) => {
+    await aprobarSolicitudAction(id);
+    await loadSolicitudes();
+  };
+
+  const handleRechazar = async (id: string) => {
+    if (!rechazoNota.trim()) return;
+    await rechazarSolicitudAction(id, rechazoNota);
+    setRechazandoId(null);
+    setRechazoNota("");
+    await loadSolicitudes();
   };
 
   const copyGuestUrl = () => {
@@ -542,7 +593,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── MODAL CREAR PRESUPUESTO RÁPIDO ── */}
+        {/* ── MODALES CREAR PRESUPUESTO ── */}
         {crearParaPaquete && (
           <QuickPresupuestoModal
             key={crearParaPaquete}
@@ -553,10 +604,108 @@ export default function AdminPage() {
             onCreated={() => { loadSolicitudes(); setCrearParaPaquete(null); }}
           />
         )}
+        {crearAbierto && (
+          <QuickPresupuestoModal
+            adminWA={adminWA}
+            onClose={() => setCrearAbierto(false)}
+            onCreated={() => { loadSolicitudes(); setCrearAbierto(false); }}
+          />
+        )}
 
         {/* ── TAB PRESUPUESTOS ── */}
         {tab === "presupuestos" && (
           <div className="flex flex-col gap-10">
+
+            {/* ── Botón nuevo presupuesto ── */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">Panel de presupuestos</h2>
+              <button
+                onClick={() => setCrearAbierto(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-light text-charcoal font-semibold text-xs tracking-widest uppercase transition-colors"
+              >
+                <Plus size={13} /> Nuevo presupuesto
+              </button>
+            </div>
+
+            {/* ── Pendientes de aprobación ── */}
+            {solicitudes.filter(s => s.estado === "pendiente_aprobacion").length > 0 && (
+              <div className="border border-amber-500/20 bg-amber-500/5 p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400 text-[10px] tracking-[0.5em] uppercase">
+                    ⏳ Esperando aprobación ({solicitudes.filter(s => s.estado === "pendiente_aprobacion").length})
+                  </span>
+                </div>
+                {solicitudes.filter(s => s.estado === "pendiente_aprobacion").map(s => {
+                  const paq = PAQUETES[s.paquete as keyof typeof PAQUETES];
+                  const presupuestoUrl = `https://cateringprofesional.com.ar/presupuesto/${s.id}`;
+                  const esRechazando = rechazandoId === s.id;
+                  return (
+                    <div key={s.id} className="border border-white/8 bg-black/20 p-4 flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                          <p className="text-white font-semibold text-sm">{s.nombre}</p>
+                          <p className="text-white/40 text-xs mt-0.5">
+                            {paq?.nombre ?? s.paquete} · {s.invitados} personas · {s.tipo_evento}
+                          </p>
+                          <p className="text-white/30 text-xs">
+                            {new Date(s.fecha_evento + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "long" })} · {s.lugar}
+                          </p>
+                          {s.notas_admin && (
+                            <p className="text-white/40 text-xs mt-1 italic">{s.notas_admin}</p>
+                          )}
+                        </div>
+                        <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-gold/60 hover:text-gold text-xs underline underline-offset-2 transition-colors shrink-0">
+                          Ver PDF →
+                        </a>
+                      </div>
+
+                      {!esRechazando ? (
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleAprobar(s.id)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+                          >
+                            <CheckCircle size={12} /> Aprobar
+                          </button>
+                          <button
+                            onClick={() => { setRechazandoId(s.id); setRechazoNota(""); }}
+                            className="flex items-center gap-1.5 px-4 py-2 border border-red-400/40 text-red-400 hover:bg-red-400/10 text-xs tracking-wider uppercase transition-colors"
+                          >
+                            Rechazar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={rechazoNota}
+                            onChange={e => setRechazoNota(e.target.value)}
+                            placeholder="Motivo del rechazo (el colaborador lo verá)..."
+                            rows={2}
+                            className="w-full bg-transparent border border-red-400/30 px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-red-400/60 resize-none"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleRechazar(s.id)}
+                              disabled={!rechazoNota.trim()}
+                              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold tracking-wider uppercase transition-colors disabled:opacity-40"
+                            >
+                              Confirmar rechazo
+                            </button>
+                            <button
+                              onClick={() => setRechazandoId(null)}
+                              className="px-4 py-2 border border-white/10 text-white/40 hover:text-white text-xs transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* ── Paquetes vigentes ── */}
             <div>
