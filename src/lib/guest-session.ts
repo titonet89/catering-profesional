@@ -8,7 +8,7 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-export type GuestPayload = { guestId: string; username: string; nombre: string };
+export type GuestPayload = { guestId: string; username: string; nombre: string; whatsapp: string };
 
 export async function signGuestToken(payload: GuestPayload): Promise<string> {
   return new SignJWT({ ...payload, type: "guest" })
@@ -23,9 +23,10 @@ export async function verifyGuestToken(token: string): Promise<GuestPayload | nu
     const { payload } = await jwtVerify(token, secret());
     if (payload.type !== "guest") return null;
     return {
-      guestId: payload.guestId as string,
-      username: payload.username as string,
-      nombre:   payload.nombre   as string,
+      guestId:   payload.guestId   as string,
+      username:  payload.username  as string,
+      nombre:    payload.nombre    as string,
+      whatsapp: (payload.whatsapp  as string) ?? "",
     };
   } catch {
     return null;

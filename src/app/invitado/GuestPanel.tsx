@@ -175,7 +175,7 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
 }
 
 // ── Formulario nuevo presupuesto ─────────────────────────────────────────────
-function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
+function NuevaSolicitudForm({ onClose, session }: { onClose: () => void; session: GuestPayload }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createSolicitudGuestAction, null);
 
@@ -184,23 +184,31 @@ function NuevaSolicitudForm({ onClose }: { onClose: () => void }) {
   }, [state?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (state?.id) {
+    const presupuestoUrl = `${SITE_URL}/presupuesto/${state.id}`;
+    const waPropioTexto  = encodeURIComponent(
+      `*Nuevo presupuesto creado* 📋\n\n👉 ${presupuestoUrl}`
+    );
+    const waPropio = session.whatsapp
+      ? `https://wa.me/${toWAPhone(session.whatsapp)}?text=${waPropioTexto}`
+      : null;
+
     return (
       <div className="border border-gold/20 bg-gold/5 p-8 flex flex-col items-center gap-4 text-center">
         <span className="text-3xl">✓</span>
         <p className="text-gold text-sm font-semibold">Presupuesto creado correctamente</p>
-        <div className="flex gap-3">
-          <a
-            href={`${SITE_URL}/presupuesto/${state.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors"
-          >
+        <div className="flex gap-3 flex-wrap justify-center">
+          <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
             <ExternalLink size={12} /> Ver presupuesto
           </a>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors"
-          >
+          {waPropio && (
+            <a href={waPropio} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 px-4 py-2 border border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 text-xs tracking-wider transition-colors">
+              Enviar a mi WhatsApp
+            </a>
+          )}
+          <button onClick={onClose}
+            className="px-4 py-2 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors">
             Cerrar
           </button>
         </div>
@@ -332,7 +340,7 @@ export default function GuestPanel({
 
         {/* Formulario nuevo */}
         {showForm && (
-          <NuevaSolicitudForm onClose={() => setShowForm(false)} />
+          <NuevaSolicitudForm onClose={() => setShowForm(false)} session={session} />
         )}
 
         {/* Lista */}

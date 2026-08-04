@@ -24,6 +24,7 @@ export type GuestUser = {
   id: string;
   username: string;
   nombre: string;
+  whatsapp: string;
   activo: boolean;
   created_at: string;
 };
@@ -37,8 +38,8 @@ export async function getGuestSession() {
   return verifyGuestToken(token);
 }
 
-async function setGuestCookie(guestId: string, username: string, nombre: string) {
-  const token = await signGuestToken({ guestId, username, nombre });
+async function setGuestCookie(guestId: string, username: string, nombre: string, whatsapp: string) {
+  const token = await signGuestToken({ guestId, username, nombre, whatsapp });
   const jar   = await cookies();
   jar.set("guest_session", token, {
     httpOnly: true,
@@ -63,17 +64,17 @@ export async function loginGuestAction(
   const db = supabaseAdmin();
   const { data: guest } = await db
     .from("guest_users")
-    .select("id, username, nombre, password_hash, activo")
+    .select("id, username, nombre, whatsapp, password_hash, activo")
     .eq("username", username)
     .single();
 
-  if (!guest)       return { error: "Usuario o contraseña incorrectos" };
+  if (!guest)        return { error: "Usuario o contraseña incorrectos" };
   if (!guest.activo) return { error: "Esta cuenta está desactivada" };
 
   const valid = await bcrypt.compare(password, guest.password_hash);
   if (!valid) return { error: "Usuario o contraseña incorrectos" };
 
-  await setGuestCookie(guest.id, guest.username, guest.nombre);
+  await setGuestCookie(guest.id, guest.username, guest.nombre, guest.whatsapp ?? "");
   redirect("/invitado");
 }
 
@@ -98,6 +99,8 @@ export async function createGuestUserAction(
   const username = ((formData.get("username") as string) ?? "").trim();
   const password  = (formData.get("password")  as string) ?? "";
 
+  const whatsapp = ((formData.get("whatsapp") as string) ?? "").trim();
+
   if (!nombre || !username || !password) return { error: "Completá todos los campos" };
   if (password.length < 6)               return { error: "La contraseña debe tener al menos 6 caracteres" };
   if (!/^[a-z0-9_]+$/.test(username))   return { error: "Usuario: solo letras minúsculas, números y guiones bajos" };
@@ -106,7 +109,7 @@ export async function createGuestUserAction(
   const db   = supabaseAdmin();
 
   const { error } = await db.from("guest_users").insert([{
-    username, nombre, password_hash: hash, activo: true,
+    username, nombre, whatsapp, password_hash: hash, activo: true,
   }]);
 
   if (error) {
@@ -134,7 +137,7 @@ export async function listGuestUsersAction(): Promise<GuestUser[]> {
   const db = supabaseAdmin();
   const { data } = await db
     .from("guest_users")
-    .select("id, username, nombre, activo, created_at")
+    .select("id, username, nombre, whatsapp, activo, created_at")
     .order("created_at", { ascending: false });
   return data ?? [];
 }

@@ -61,6 +61,28 @@ export async function updatePaquetePrecioAction(
   return {};
 }
 
+// ─── WhatsApp personal del admin ──────────────────────────────────────────
+
+export async function getAdminWhatsappAction(): Promise<string> {
+  const isAdmin = await getSession();
+  if (!isAdmin) return "";
+  const db = supabaseAdmin();
+  const { data } = await db.from("admin_config").select("value").eq("key", "admin_whatsapp").single();
+  return data?.value ?? "";
+}
+
+export async function setAdminWhatsappAction(
+  _prev: { error?: string; success?: string } | null,
+  formData: FormData
+): Promise<{ error?: string; success?: string }> {
+  const isAdmin = await getSession();
+  if (!isAdmin) return { error: "No autorizado" };
+  const whatsapp = ((formData.get("whatsapp") as string) ?? "").trim();
+  const db = supabaseAdmin();
+  await db.from("admin_config").upsert({ key: "admin_whatsapp", value: whatsapp, updated_at: new Date().toISOString() });
+  return { success: "Número guardado" };
+}
+
 // ─── Crear presupuesto desde admin (sin email, con precio fijo) ────────────
 
 export async function createSolicitudAdminAction(

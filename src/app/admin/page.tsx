@@ -6,7 +6,7 @@ import type { GalleryItem } from "@/lib/supabase";
 import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package } from "lucide-react";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
-import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction } from "@/app/actions/admin-presupuesto";
+import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction } from "@/app/actions/admin-presupuesto";
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
@@ -52,11 +52,13 @@ function toWAPhone(phone: string): string {
 function QuickPresupuestoModal({
   paqueteId,
   precioInicial,
+  adminWA,
   onClose,
   onCreated,
 }: {
   paqueteId: PaqueteId;
   precioInicial: number;
+  adminWA: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -77,7 +79,11 @@ function QuickPresupuestoModal({
     const waTexto = encodeURIComponent(
       `Hola ${(state.nombre ?? "").split(" ")[0]} 😊\n\nDesde *Catering Profesional* te compartimos tu propuesta personalizada — *${state.paqueteNombre}*:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
     );
-    const waUrl = `https://wa.me/${toWAPhone(state.telefono ?? "")}?text=${waTexto}`;
+    const waClienteUrl = `https://wa.me/${toWAPhone(state.telefono ?? "")}?text=${waTexto}`;
+    const waPropioTexto = encodeURIComponent(
+      `*Nuevo presupuesto creado* 📋\n\n*${state.paqueteNombre}* — ${state.nombre}\n\n👉 ${presupuestoUrl}`
+    );
+    const waPropio = adminWA ? `https://wa.me/${toWAPhone(adminWA)}?text=${waPropioTexto}` : null;
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)" }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -101,11 +107,17 @@ function QuickPresupuestoModal({
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
               <ExternalLink size={12} /> Ver PDF
             </a>
-            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+            <a href={waClienteUrl} target="_blank" rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
-              <MessageSquare size={12} /> WhatsApp
+              <MessageSquare size={12} /> Al cliente
             </a>
           </div>
+          {waPropio && (
+            <a href={waPropio} target="_blank" rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 border border-[#25D366]/40 text-[#25D366] text-xs tracking-wider hover:bg-[#25D366]/10 transition-colors">
+              <MessageSquare size={12} /> Enviar a mi WhatsApp
+            </a>
+          )}
 
           <div className="flex gap-3 w-full pt-2 border-t border-white/6">
             <button onClick={() => { onCreated(); }} className="flex-1 py-2 border border-white/10 text-white/40 hover:text-white text-xs transition-colors">
@@ -225,6 +237,10 @@ export default function AdminPage() {
   const [createGuestState, createGuestAction, createGuestPending] = useActionState(createGuestUserAction, null);
   const [copied, setCopied] = useState(false);
 
+  // whatsapp personal del admin
+  const [adminWA, setAdminWA] = useState("");
+  const [adminWAState, adminWAAction, adminWAPending] = useActionState(setAdminWhatsappAction, null);
+
   // cambio de contraseña
   const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
 
@@ -304,6 +320,7 @@ export default function AdminPage() {
     loadSubmissions();
     loadSolicitudes();
     loadPrecios();
+    getAdminWhatsappAction().then(setAdminWA);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (e: { preventDefault(): void }) => {
@@ -529,6 +546,7 @@ export default function AdminPage() {
             key={crearParaPaquete}
             paqueteId={crearParaPaquete}
             precioInicial={preciosMap[crearParaPaquete] ?? PAQUETES[crearParaPaquete]?.precio ?? 0}
+            adminWA={adminWA}
             onClose={() => setCrearParaPaquete(null)}
             onCreated={() => { loadSolicitudes(); setCrearParaPaquete(null); }}
           />
@@ -737,7 +755,34 @@ export default function AdminPage() {
 
         {/* ── TAB SEGURIDAD ── */}
         {tab === "seguridad" && (
-          <div className="max-w-sm">
+          <div className="max-w-sm flex flex-col gap-10">
+
+            {/* Mi WhatsApp personal */}
+            <div>
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">Mi WhatsApp personal</h2>
+              <p className="text-white/30 text-xs mb-4 leading-relaxed">
+                Se usa para enviarte el link de cada presupuesto que crees, así lo tenés a mano para reenviar a quien quieras.
+              </p>
+              <form action={adminWAAction} className="flex flex-col gap-4">
+                <input
+                  name="whatsapp"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Ej: 3884036629 (sin +54)"
+                  defaultValue={adminWA}
+                  className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                />
+                <p className="text-white/20 text-[10px]">Podés escribir el número con o sin código de país — se formatea automáticamente</p>
+                {adminWAState?.error   && <p className="text-red-400 text-xs">{adminWAState.error}</p>}
+                {adminWAState?.success && <p className="text-emerald-400 text-xs">✓ {adminWAState.success}</p>}
+                <button type="submit" disabled={adminWAPending}
+                  className="py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-50">
+                  {adminWAPending ? "Guardando..." : "Guardar número"}
+                </button>
+              </form>
+            </div>
+
+            <div>
             <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">Cambiar contraseña</h2>
             <form action={changePwdAction} className="flex flex-col gap-4">
               <input
@@ -777,6 +822,7 @@ export default function AdminPage() {
                 {changePwdPending ? "Guardando..." : "Cambiar contraseña"}
               </button>
             </form>
+            </div>
           </div>
         )}
 
@@ -829,6 +875,13 @@ export default function AdminPage() {
                   required
                   pattern="[a-z0-9_]+"
                   title="Solo letras minúsculas, números y guiones bajos"
+                  className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                />
+                <input
+                  name="whatsapp"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="WhatsApp del colaborador (ej: 3884036629)"
                   className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
                 />
                 <input
