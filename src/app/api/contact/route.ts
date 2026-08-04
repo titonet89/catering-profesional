@@ -26,8 +26,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Enviar email de notificación
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
   const { error: emailError } = await resend.emails.send({
-    from:    "Catering Profesional <onboarding@resend.dev>",
+    from:    fromEmail,
     to:      "cateringprofesionaljujuy@gmail.com",
     subject: `Nueva consulta de ${nombre} — ${evento || "Sin especificar"}`,
     html: `

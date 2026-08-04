@@ -56,8 +56,9 @@ export async function POST(req: NextRequest) {
     `Hola ${nombre.split(" ")[0]} 😊\n\nDesde *Catering Profesional* queremos agradecerte por elegirnos para tu evento.\n\nTe compartimos tu propuesta personalizada — *${paquete.nombre}* para ${invitados} personas:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta no dudes en escribirnos. ¡Estamos a tu disposición!\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
   )}`;
 
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
   await resend.emails.send({
-    from: "Catering Profesional <onboarding@resend.dev>",
+    from: fromEmail,
     to: "cateringprofesionaljujuy@gmail.com",
     subject: `${esGrupoGrande ? "🔔 " : "📋 "}Nueva solicitud: ${paquete.nombre} — ${nombre} (${invitados} personas)`,
     html: `
