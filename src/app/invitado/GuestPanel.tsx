@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/guest-auth";
 import { PAQUETES_LISTA, PAQUETES, type PaqueteId } from "@/data/paquetes";
 import type { GuestPayload } from "@/lib/guest-session";
+import VajillaGuestSection from "./VajillaGuestSection";
 
 type Solicitud = {
   id: string;
@@ -377,7 +378,7 @@ export default function GuestPanel({
           <NuevaSolicitudForm onClose={() => setShowForm(false)} session={session} />
         )}
 
-        {/* Lista */}
+        {/* Lista de presupuestos */}
         {initialSolicitudes.length === 0 && !showForm ? (
           <div className="border border-white/5 py-20 text-center">
             <p className="text-white/20 text-sm">No tenés presupuestos aún.</p>
@@ -395,6 +396,12 @@ export default function GuestPanel({
             ))}
           </div>
         )}
+
+        {/* Separador */}
+        <div className="h-px bg-white/6 mt-4" />
+
+        {/* Sección vajilla */}
+        <VajillaGuestSection />
 
       </div>
     </div>

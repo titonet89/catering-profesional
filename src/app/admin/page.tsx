@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus, ShoppingBag } from "lucide-react";
+import VajillaTab from "./VajillaTab";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
 import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction, aprobarSolicitudAction, rechazarSolicitudAction } from "@/app/actions/admin-presupuesto";
@@ -11,7 +12,7 @@ import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type P
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
 
-type Tab = "galeria" | "consultas" | "presupuestos" | "seguridad" | "colaboradores";
+type Tab = "galeria" | "consultas" | "presupuestos" | "vajilla" | "seguridad" | "colaboradores";
 
 type Solicitud = {
   id: string;
@@ -443,8 +444,9 @@ export default function AdminPage() {
           ["galeria",      Image,         "Galería"],
           ["consultas",    MessageSquare, "Consultas"],
           ["presupuestos", FileText,      `Presupuestos${solicitudes.filter(s => s.estado === "pendiente").length ? ` (${solicitudes.filter(s => s.estado === "pendiente").length})` : ""}`],
-          ["seguridad",       Lock,    "Seguridad"],
-          ["colaboradores",  Users,   "Colaboradores"],
+          ["vajilla",      ShoppingBag, "Vajilla"],
+          ["seguridad",    Lock,        "Seguridad"],
+          ["colaboradores",Users,       "Colaboradores"],
         ] as const).map(([id, Icon, label]) => (
           <button
             key={id}
@@ -1100,6 +1102,9 @@ export default function AdminPage() {
 
           </div>
         )}
+
+        {/* ── TAB VAJILLA ── */}
+        {tab === "vajilla" && <VajillaTab />}
 
       </div>
     </div>
