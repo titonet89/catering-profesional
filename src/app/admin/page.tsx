@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus, ShoppingBag } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image as ImageIcon, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus, ShoppingBag } from "lucide-react";
 import VajillaTab from "./VajillaTab";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
@@ -11,6 +11,43 @@ import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdmi
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
+
+// ─── Marca de agua via Canvas (client-side, antes de subir) ──────────────────
+async function addWatermark(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+
+      // Texto de marca de agua — esquina inferior derecha
+      const fontSize = Math.max(14, Math.round(canvas.width * 0.024));
+      ctx.font      = `bold ${fontSize}px Georgia, serif`;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      const pad = Math.round(canvas.width * 0.022);
+
+      // Sombra sutil para legibilidad sobre fondos claros
+      ctx.shadowColor   = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur    = 6;
+      ctx.fillStyle     = "rgba(255,255,255,0.32)";
+      ctx.fillText("© Catering Profesional · Jujuy", canvas.width - pad, canvas.height - pad);
+
+      URL.revokeObjectURL(objectUrl);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("Canvas error"))),
+        "image/jpeg",
+        0.92
+      );
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
+}
 
 type Tab = "galeria" | "consultas" | "presupuestos" | "vajilla" | "seguridad" | "colaboradores";
 
@@ -27,6 +64,7 @@ type Solicitud = {
   mensaje: string;
   estado: "pendiente" | "enviado" | "pendiente_aprobacion" | "aprobado" | "rechazado";
   notas_admin: string;
+  precio_override: number | null;
   rechazo_nota?: string;
   guest_id: string | null;
   created_at: string;
@@ -243,11 +281,13 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("galeria");
 
   // galería
-  const [items, setItems]         = useState<GalleryItem[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [title, setTitle]         = useState("");
-  const [categoria, setCategoria] = useState(CATEGORIAS[0]);
-  const fileRef                   = useRef<HTMLInputElement>(null);
+  const [items, setItems]           = useState<GalleryItem[]>([]);
+  const [uploading, setUploading]   = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [title, setTitle]           = useState("");
+  const [categoria, setCategoria]   = useState(CATEGORIAS[0]);
+  const [fileCount, setFileCount]   = useState(0);
+  const fileRef                     = useRef<HTMLInputElement>(null);
 
   // consultas
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -267,8 +307,11 @@ export default function AdminPage() {
   const [crearAbierto, setCrearAbierto] = useState(false);
 
   // aprobación de colaboradores
-  const [rechazandoId, setRechazandoId]   = useState<string | null>(null);
-  const [rechazoNota,  setRechazoNota]    = useState("");
+  const [rechazandoId,    setRechazandoId]    = useState<string | null>(null);
+  const [rechazoNota,     setRechazoNota]     = useState("");
+  const [aprobandoId,     setAprobandoId]     = useState<string | null>(null);
+  const [aprobacionNota,  setAprobacionNota]  = useState("");
+  const [aprobacionPrecio, setAprobacionPrecio] = useState("");
 
   // colaboradores
   const [guestUsers, setGuestUsers] = useState<GuestUser[]>([]);
@@ -326,7 +369,15 @@ export default function AdminPage() {
   };
 
   const handleAprobar = async (id: string) => {
-    await aprobarSolicitudAction(id);
+    const rawPrecio = aprobacionPrecio.replace(/\D/g, "");
+    const precio = rawPrecio ? Number(rawPrecio) : null;
+    await aprobarSolicitudAction(id, {
+      notas_admin: aprobacionNota.trim() || undefined,
+      precio_override: precio && !isNaN(precio) ? precio : undefined,
+    });
+    setAprobandoId(null);
+    setAprobacionNota("");
+    setAprobacionPrecio("");
     await loadSolicitudes();
   };
 
@@ -377,32 +428,56 @@ export default function AdminPage() {
 
   const handleUpload = async (e: { preventDefault(): void }) => {
     e.preventDefault();
-    const file = fileRef.current?.files?.[0];
-    if (!file || !title) return;
+    const files = fileRef.current?.files;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
-    const ext  = file.name.split(".").pop();
-    const path = `${Date.now()}.${ext}`;
-    const tipo = file.type.startsWith("video") ? "video" : "foto";
+    let ok = 0;
 
-    const { error: storageError } = await supabase.storage
-      .from("galeria")
-      .upload(path, file, { cacheControl: "3600", upsert: false });
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress({ current: i + 1, total: files.length });
 
-    if (storageError) { alert("Error al subir archivo: " + storageError.message); setUploading(false); return; }
+      try {
+        let uploadBlob: Blob;
+        let ext = "jpg";
 
-    const { error: dbError } = await supabase.from("gallery_items").insert([{
-      title, categoria, storage_path: path, tipo, activo: true,
-    }]);
+        if (file.type.startsWith("image/")) {
+          uploadBlob = await addWatermark(file);
+          ext = "jpg";
+        } else {
+          uploadBlob = file;
+          ext = file.name.split(".").pop() ?? "mp4";
+        }
 
-    if (dbError) { alert("Error al guardar en BD: " + dbError.message); }
-    else {
-      setTitle("");
-      setCategoria(CATEGORIAS[0]);
-      if (fileRef.current) fileRef.current.value = "";
-      await loadItems();
+        const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const tipo = file.type.startsWith("video/") ? "video" : "foto";
+
+        const { error: storageError } = await supabase.storage
+          .from("galeria")
+          .upload(path, uploadBlob, { cacheControl: "3600", upsert: false });
+
+        if (storageError) { console.error("Error storage:", storageError.message); continue; }
+
+        const fileTitle = title.trim() || file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+
+        const { error: dbError } = await supabase.from("gallery_items").insert([{
+          title: fileTitle, categoria, storage_path: path, tipo, activo: true,
+        }]);
+
+        if (!dbError) ok++;
+      } catch (err) {
+        console.error("Error procesando", file.name, err);
+      }
     }
+
     setUploading(false);
+    setUploadProgress(null);
+    setFileCount(0);
+    setTitle("");
+    if (fileRef.current) fileRef.current.value = "";
+    await loadItems();
+    if (ok > 0) alert(`✓ ${ok} de ${files.length} foto(s) subida(s) con marca de agua`);
   };
 
   const toggleActivo = async (item: GalleryItem) => {
@@ -441,9 +516,15 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex border-b border-white/8 px-2 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {([
-          ["galeria",      Image,         "Galería"],
+          ["galeria",      ImageIcon,     "Galería"],
           ["consultas",    MessageSquare, "Consultas"],
-          ["presupuestos", FileText,      `Presupuestos${solicitudes.filter(s => s.estado === "pendiente").length ? ` (${solicitudes.filter(s => s.estado === "pendiente").length})` : ""}`],
+          ["presupuestos", FileText, (() => {
+            const nAprobacion = solicitudes.filter(s => s.estado === "pendiente_aprobacion").length;
+            const nPendiente  = solicitudes.filter(s => s.estado === "pendiente").length;
+            if (nAprobacion > 0) return `Presupuestos ⚠ (${nAprobacion})`;
+            if (nPendiente  > 0) return `Presupuestos (${nPendiente})`;
+            return "Presupuestos";
+          })()],
           ["vajilla",      ShoppingBag, "Vajilla"],
           ["seguridad",    Lock,        "Seguridad"],
           ["colaboradores",Users,       "Colaboradores"],
@@ -469,15 +550,15 @@ export default function AdminPage() {
           <div className="flex flex-col gap-10">
 
             <div className="border border-white/8 p-7">
-              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-6">Subir nueva foto o video</h2>
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-1">Subir fotos a la galería</h2>
+              <p className="text-white/25 text-xs mb-6">Podés seleccionar varias fotos a la vez. Se agrega marca de agua automáticamente.</p>
               <form onSubmit={handleUpload} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Título (ej: Boda en Jujuy)"
-                    required
-                    className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+                    placeholder="Título (opcional — se usa el nombre del archivo)"
+                    className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-gold/40"
                   />
                   <select
                     value={categoria}
@@ -493,21 +574,48 @@ export default function AdminPage() {
                   onClick={() => fileRef.current?.click()}
                 >
                   <Upload size={24} className="text-white/30" />
-                  <p className="text-white/40 text-sm">
-                    {fileRef.current?.files?.[0]?.name ?? "Hacé clic para seleccionar foto o video"}
-                  </p>
-                  <p className="text-white/20 text-xs">JPG, PNG, WEBP, MP4 — máx. 50MB</p>
-                  <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" required
-                    onChange={() => setTitle((t) => t)} />
+                  {fileCount > 0 ? (
+                    <p className="text-gold/70 text-sm font-medium">{fileCount} foto(s) seleccionada(s)</p>
+                  ) : (
+                    <p className="text-white/40 text-sm">Hacé clic para seleccionar una o varias fotos</p>
+                  )}
+                  <p className="text-white/20 text-xs">JPG, PNG, WEBP — podés elegir varias a la vez</p>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    className="hidden"
+                    required
+                    onChange={(e) => setFileCount(e.target.files?.length ?? 0)}
+                  />
                 </div>
+
+                {/* Barra de progreso durante upload */}
+                {uploadProgress && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between text-xs text-white/40">
+                      <span>Subiendo {uploadProgress.current} de {uploadProgress.total}…</span>
+                      <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                    </div>
+                    <div className="h-1 bg-white/10 rounded">
+                      <div
+                        className="h-1 bg-gold transition-all duration-300 rounded"
+                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"
-                  disabled={uploading}
-                  className="flex items-center justify-center gap-2 py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-50"
+                  disabled={uploading || fileCount === 0}
+                  className="flex items-center justify-center gap-2 py-3 bg-gold hover:bg-gold-light text-charcoal font-semibold text-sm tracking-widest uppercase transition-colors disabled:opacity-40"
                 >
                   <Upload size={15} />
-                  {uploading ? "Subiendo..." : "Subir a la galería"}
+                  {uploading
+                    ? `Procesando${uploadProgress ? ` ${uploadProgress.current}/${uploadProgress.total}` : "…"}`
+                    : `Subir${fileCount > 1 ? ` ${fileCount} fotos` : " foto"} con marca de agua`}
                 </button>
               </form>
             </div>
@@ -662,10 +770,10 @@ export default function AdminPage() {
                         </a>
                       </div>
 
-                      {!esRechazando ? (
+                      {!esRechazando && aprobandoId !== s.id ? (
                         <div className="flex gap-2 flex-wrap">
                           <button
-                            onClick={() => handleAprobar(s.id)}
+                            onClick={() => { setAprobandoId(s.id); setAprobacionNota(""); setAprobacionPrecio(""); }}
                             className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold tracking-wider uppercase transition-colors"
                           >
                             <CheckCircle size={12} /> Aprobar
@@ -676,6 +784,48 @@ export default function AdminPage() {
                           >
                             Rechazar
                           </button>
+                        </div>
+                      ) : aprobandoId === s.id ? (
+                        <div className="flex flex-col gap-3 border border-emerald-500/20 bg-emerald-500/5 p-4">
+                          <p className="text-emerald-400 text-[10px] tracking-[0.4em] uppercase">Confirmar aprobación</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio/persona (ARS)</label>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={aprobacionPrecio}
+                                onChange={e => setAprobacionPrecio(e.target.value)}
+                                placeholder={s.precio_override ? String(s.precio_override) : "Dejar vacío = precio original"}
+                                className="bg-transparent border border-white/10 px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-gold/40"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-white/30 text-[10px] tracking-widest uppercase">Notas para el PDF (opcional)</label>
+                            <textarea
+                              value={aprobacionNota}
+                              onChange={e => setAprobacionNota(e.target.value)}
+                              placeholder="Ej: Se agrega entrada especial · Decoración personalizada · Horario extendido..."
+                              rows={2}
+                              className="w-full bg-transparent border border-white/10 px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40 resize-none"
+                            />
+                            <p className="text-white/20 text-[10px]">Aparece en el PDF bajo &quot;Notas y personalizaciones&quot;</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAprobar(s.id)}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+                            >
+                              <CheckCircle size={12} /> Confirmar aprobación
+                            </button>
+                            <button
+                              onClick={() => setAprobandoId(null)}
+                              className="px-4 py-2 border border-white/10 text-white/40 hover:text-white text-xs transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2">
@@ -797,112 +947,135 @@ export default function AdminPage() {
             </div>
 
             {/* ── Solicitudes recibidas ── */}
-            <div className="border-t border-white/6 pt-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">
-                Solicitudes recibidas ({solicitudes.length})
-              </h2>
-              <div className="flex gap-3 text-xs text-white/30">
-                <span className="flex items-center gap-1"><Clock size={11} /> Pendientes: {solicitudes.filter(s => s.estado === "pendiente").length}</span>
-                <span className="flex items-center gap-1"><CheckCircle size={11} /> Enviados: {solicitudes.filter(s => s.estado === "enviado").length}</span>
-              </div>
-            </div>
+            {(() => {
+              const BADGE: Record<string, { label: string; cls: string }> = {
+                pendiente:            { label: "PENDIENTE",        cls: "border-gold/40 text-gold" },
+                aprobado:             { label: "APROBADO",         cls: "border-emerald-500/40 text-emerald-400" },
+                enviado:              { label: "ENVIADO",          cls: "border-white/20 text-white/30" },
+                rechazado:            { label: "RECHAZADO",        cls: "border-red-400/30 text-red-400/70" },
+                pendiente_aprobacion: { label: "ESP. APROBACIÓN",  cls: "border-amber-400/40 text-amber-400" },
+              };
+              const BORDER: Record<string, string> = {
+                pendiente: "border-gold/20",
+                aprobado:  "border-emerald-500/20",
+                enviado:   "border-white/8 opacity-60",
+                rechazado: "border-white/6 opacity-40",
+                pendiente_aprobacion: "border-white/6 opacity-40",
+              };
+              const canSend = (estado: string) => estado === "pendiente" || estado === "aprobado";
 
-            {solicitudes.length === 0 ? (
-              <p className="text-white/20 text-sm text-center py-12">No hay solicitudes aún</p>
-            ) : (
-              solicitudes.map((s) => {
-                const paquete = PAQUETES[s.paquete as keyof typeof PAQUETES];
-                const esGrande = s.invitados >= PRECIO_MINIMO_INVITADOS;
-                const total = esGrande && paquete ? formatPrecio(paquete.precio * s.invitados) : null;
-                const presupuestoUrl = `https://cateringprofesional.com.ar/presupuesto/${s.id}`;
-                const waTexto = encodeURIComponent(
-                  `Hola ${s.nombre.split(" ")[0]} 😊\n\nDesde *Catering Profesional* queremos agradecerte por elegirnos para tu evento.\n\nTe compartimos tu propuesta personalizada — *${paquete?.nombre ?? s.paquete}* para ${s.invitados} personas:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta no dudes en escribirnos. ¡Estamos a tu disposición!\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
-                );
-                const waUrl = `https://wa.me/${toWAPhone(s.telefono)}?text=${waTexto}`;
-                const isOpen = solicitudAbierta === s.id;
-
-                return (
-                  <div key={s.id} className={`border transition-colors ${s.estado === "pendiente" ? "border-gold/20" : "border-white/8 opacity-60"}`}>
-                    {/* Fila resumen */}
-                    <div
-                      className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/2"
-                      onClick={() => setSolicitudAbierta(isOpen ? null : s.id)}
-                    >
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <span className={`text-[10px] tracking-wider px-2 py-0.5 border ${s.estado === "pendiente" ? "border-gold/40 text-gold" : "border-white/20 text-white/30"}`}>
-                          {s.estado === "pendiente" ? "PENDIENTE" : "ENVIADO"}
-                        </span>
-                        <div>
-                          <p className="text-white font-semibold text-sm">{s.nombre}</p>
-                          <p className="text-white/40 text-xs">{paquete?.nombre ?? s.paquete} · {s.invitados} personas · {s.tipo_evento}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {esGrande && total && (
-                          <span className="text-gold text-xs hidden sm:block">{total}</span>
-                        )}
-                        <span className="text-white/20 text-xs">
-                          {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                        </span>
-                        <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-                      </div>
+              return (
+                <div className="border-t border-white/6 pt-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase">
+                      Solicitudes recibidas ({solicitudes.length})
+                    </h2>
+                    <div className="flex gap-3 text-xs text-white/25 flex-wrap">
+                      <span className="flex items-center gap-1"><Clock size={11} /> Pendientes: {solicitudes.filter(s => s.estado === "pendiente").length}</span>
+                      <span className="flex items-center gap-1 text-emerald-400/40"><CheckCircle size={11} /> Aprobados: {solicitudes.filter(s => s.estado === "aprobado").length}</span>
+                      <span className="flex items-center gap-1"><CheckCircle size={11} /> Enviados: {solicitudes.filter(s => s.estado === "enviado").length}</span>
                     </div>
+                  </div>
 
-                    {/* Detalle expandido */}
-                    {isOpen && (
-                      <div className="border-t border-white/8 px-5 py-5 flex flex-col gap-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {[
-                            ["Fecha evento", new Date(s.fecha_evento + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })],
-                            ["Lugar", s.lugar],
-                            ["WhatsApp", s.telefono],
-                            ["Email", s.email],
-                            ["Invitados", `${s.invitados} personas`],
-                            ...(s.mensaje ? [["Comentarios", s.mensaje]] : []),
-                          ].map(([k, v]) => (
-                            <div key={k}>
-                              <p className="text-white/30 text-[10px] tracking-widest uppercase">{k}</p>
-                              <p className="text-white/80 text-xs mt-0.5">{v}</p>
+                  {solicitudes.length === 0 ? (
+                    <p className="text-white/20 text-sm text-center py-12">No hay solicitudes aún</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                    {solicitudes.map((s) => {
+                      const paquete = PAQUETES[s.paquete as keyof typeof PAQUETES];
+                      const precioPP = s.precio_override ?? paquete?.precio ?? null;
+                      const total = precioPP ? formatPrecio(precioPP * s.invitados) : null;
+                      const presupuestoUrl = `https://cateringprofesional.com.ar/presupuesto/${s.id}`;
+                      const waTexto = encodeURIComponent(
+                        `Hola ${s.nombre.split(" ")[0]} 😊\n\nDesde *Catering Profesional* te compartimos tu propuesta personalizada — *${paquete?.nombre ?? s.paquete}* para ${s.invitados} personas:\n\n👉 ${presupuestoUrl}\n\nCualquier consulta escribinos 🙌\n\n✨ *Catering Profesional Jujuy*\n📞 388 403-6629`
+                      );
+                      const waUrl = `https://wa.me/${toWAPhone(s.telefono)}?text=${waTexto}`;
+                      const isOpen = solicitudAbierta === s.id;
+                      const badge = BADGE[s.estado] ?? BADGE.enviado;
+                      const borderCls = BORDER[s.estado] ?? "border-white/8";
+
+                      return (
+                        <div key={s.id} className={`border transition-colors ${borderCls}`}>
+                          {/* Fila resumen */}
+                          <div
+                            className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/2"
+                            onClick={() => setSolicitudAbierta(isOpen ? null : s.id)}
+                          >
+                            <div className="flex items-center gap-4 flex-wrap">
+                              <span className={`text-[9px] tracking-wider px-2 py-0.5 border ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                              <div>
+                                <p className="text-white font-semibold text-sm">{s.nombre}</p>
+                                <p className="text-white/40 text-xs">{paquete?.nombre ?? s.paquete} · {s.invitados} inv. · {s.tipo_evento}</p>
+                              </div>
                             </div>
-                          ))}
-                        </div>
-
-                        {esGrande ? (
-                          <div className="border border-gold/20 bg-gold/5 px-4 py-3 text-xs text-gold/80">
-                            ✦ Evento de {s.invitados} personas — el presupuesto ya incluye precio.
-                            {total && <span className="ml-2 font-bold text-gold">Total: {total}</span>}
+                            <div className="flex items-center gap-3">
+                              {total && (
+                                <span className="text-gold text-xs hidden sm:block">{total}</span>
+                              )}
+                              <span className="text-white/20 text-xs">
+                                {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                              </span>
+                              <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="border border-white/10 px-4 py-3 text-xs text-white/40">
-                            Evento de {s.invitados} personas (menos de {PRECIO_MINIMO_INVITADOS}). Revisá y completá el precio antes de enviar.
-                          </div>
-                        )}
 
-                        <div className="flex gap-3 flex-wrap">
-                          <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
-                            <ExternalLink size={13} /> Ver presupuesto
-                          </a>
-                          <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                            onClick={() => { if (s.estado === "pendiente") marcarEnviado(s.id); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
-                            <MessageSquare size={13} /> Enviar por WhatsApp
-                          </a>
-                          {s.estado === "pendiente" && (
-                            <button onClick={() => marcarEnviado(s.id)}
-                              className="flex items-center gap-2 px-4 py-2 border border-white/10 text-white/30 hover:text-white text-xs tracking-wider transition-colors">
-                              <CheckCircle size={13} /> Marcar como enviado
-                            </button>
+                          {/* Detalle expandido */}
+                          {isOpen && (
+                            <div className="border-t border-white/8 px-5 py-5 flex flex-col gap-4">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {[
+                                  ["Fecha evento", new Date(s.fecha_evento + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })],
+                                  ["Lugar",     s.lugar],
+                                  ["WhatsApp",  s.telefono],
+                                  ["Email",     s.email],
+                                  ["Invitados", `${s.invitados} personas`],
+                                  ...(s.notas_admin ? [["Notas", s.notas_admin]] : []),
+                                  ...(s.mensaje     ? [["Comentarios", s.mensaje]] : []),
+                                ].map(([k, v]) => (
+                                  <div key={k}>
+                                    <p className="text-white/30 text-[10px] tracking-widest uppercase">{k}</p>
+                                    <p className="text-white/80 text-xs mt-0.5">{v}</p>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {total && (
+                                <div className="border border-gold/20 bg-gold/5 px-4 py-3 text-xs text-gold/80">
+                                  ✦ {s.invitados} personas · {precioPP ? formatPrecio(precioPP) : "—"} / persona · Total: <strong className="text-gold">{total}</strong>
+                                </div>
+                              )}
+
+                              <div className="flex gap-3 flex-wrap">
+                                <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/60 hover:text-white text-xs tracking-wider transition-colors">
+                                  <ExternalLink size={13} /> Ver PDF
+                                </a>
+                                {canSend(s.estado) && (
+                                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                                    onClick={() => { if (s.estado === "pendiente" || s.estado === "aprobado") marcarEnviado(s.id); }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
+                                    <MessageSquare size={13} /> Enviar por WhatsApp
+                                  </a>
+                                )}
+                                {canSend(s.estado) && (
+                                  <button onClick={() => marcarEnviado(s.id)}
+                                    className="flex items-center gap-2 px-4 py-2 border border-white/10 text-white/30 hover:text-white text-xs tracking-wider transition-colors">
+                                    <CheckCircle size={13} /> Marcar como enviado
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-            </div>
+                      );
+                    })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 

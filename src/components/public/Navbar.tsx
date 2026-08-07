@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X, Phone, LogIn, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -15,9 +15,11 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
-  const [scrolled,     setScrolled]     = useState(false);
-  const [menuOpen,     setMenuOpen]     = useState(false);
+  const [scrolled,      setScrolled]     = useState(false);
+  const [menuOpen,      setMenuOpen]     = useState(false);
+  const [loginOpen,     setLoginOpen]    = useState(false);
   const [activeSection] = useState("inicio");
+  const loginRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -32,6 +34,17 @@ export default function Navbar() {
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Cierra el dropdown de login al hacer click afuera
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
+        setLoginOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const handleNavClick = (href: string) => {
@@ -96,12 +109,59 @@ export default function Navbar() {
               <Phone size={15} />
               <span className="tracking-wider">Llamanos</span>
             </a>
+
             <button
               onClick={() => handleNavClick("#contacto")}
               className="px-6 py-2.5 bg-gold hover:bg-gold-light text-charcoal text-sm font-semibold tracking-widest uppercase transition-all duration-300 hover:shadow-lg hover:shadow-gold/20"
             >
               Consultar
             </button>
+
+            {/* Separador vertical */}
+            <div className="w-px h-6 bg-white/15" />
+
+            {/* Dropdown Ingresar — acceso interno, separado del CTA público */}
+            <div className="relative" ref={loginRef}>
+              <button
+                onClick={() => setLoginOpen((v) => !v)}
+                className="flex items-center gap-1.5 text-white/45 hover:text-white/80 transition-colors duration-300 text-xs tracking-widest uppercase"
+              >
+                <LogIn size={13} />
+                <span>Ingresar</span>
+                <ChevronDown
+                  size={12}
+                  className={cn("transition-transform duration-200", loginOpen && "rotate-180")}
+                />
+              </button>
+
+              <AnimatePresence>
+                {loginOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="absolute right-0 top-full mt-3 w-48 bg-charcoal/98 backdrop-blur-md border border-white/10 shadow-2xl shadow-black/40 z-50"
+                  >
+                    <a
+                      href="/admin/login"
+                      className="flex items-center gap-3 px-5 py-3.5 text-sm text-white/70 hover:bg-white/5 hover:text-gold transition-colors duration-200 tracking-wide"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold/50" />
+                      Administrador
+                    </a>
+                    <div className="mx-4 h-px bg-white/10" />
+                    <a
+                      href="/invitado/login"
+                      className="flex items-center gap-3 px-5 py-3.5 text-sm text-white/70 hover:bg-white/5 hover:text-gold transition-colors duration-200 tracking-wide"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold/50" />
+                      Colaborador
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Hamburger Mobile */}
@@ -148,7 +208,7 @@ export default function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="mt-10"
+              className="mt-10 flex flex-col gap-3"
             >
               <button
                 onClick={() => handleNavClick("#contacto")}
@@ -156,6 +216,23 @@ export default function Navbar() {
               >
                 Solicitar Consulta
               </button>
+
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <a
+                  href="/admin/login"
+                  className="flex items-center justify-center gap-2 py-3 border border-white/20 text-white/60 hover:border-gold/50 hover:text-gold transition-colors text-xs tracking-widest uppercase"
+                >
+                  <LogIn size={13} />
+                  Admin
+                </a>
+                <a
+                  href="/invitado/login"
+                  className="flex items-center justify-center gap-2 py-3 border border-white/20 text-white/60 hover:border-gold/50 hover:text-gold transition-colors text-xs tracking-widest uppercase"
+                >
+                  <LogIn size={13} />
+                  Colaborador
+                </a>
+              </div>
             </motion.div>
 
             <p className="mt-auto mb-10 text-white/30 text-xs tracking-widest text-center uppercase">

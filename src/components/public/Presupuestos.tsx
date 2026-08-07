@@ -2,17 +2,21 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, Calendar, MapPin, ChefHat, Send } from "lucide-react";
-import { PAQUETES_LISTA, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
+import { X, Users, Calendar, MapPin, ChefHat, Send, Check } from "lucide-react";
+import { PAQUETES_LISTA, PRECIO_MINIMO_INVITADOS, formatPrecio, type PaqueteId } from "@/data/paquetes";
+import { cn } from "@/lib/utils";
 
 const TIPOS_EVENTO = ["Boda", "Cumpleaños", "Evento corporativo", "Gala", "Quinceañero", "Bautismo", "Comunión", "Aniversario", "Otro"];
+const POPULAR: PaqueteId[] = ["cena-promo-2", "lunch-promo-2"];
 
 type FormState = "idle" | "sending" | "ok" | "error";
+type Tab = "cena" | "lunch";
 
 const inputClass =
   "w-full bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors";
 
 export default function Presupuestos() {
+  const [tab, setTab] = useState<Tab>("cena");
   const [modalPaquete, setModalPaquete] = useState<PaqueteId | null>(null);
   const [form, setForm] = useState({
     nombre: "", email: "", telefono: "", fecha: "",
@@ -21,6 +25,9 @@ export default function Presupuestos() {
   const [estado, setEstado] = useState<FormState>("idle");
 
   const paquete = modalPaquete ? PAQUETES_LISTA.find((p) => p.id === modalPaquete) : null;
+  const visible = PAQUETES_LISTA.filter((p) => p.tipo === tab);
+  const cenaCount = PAQUETES_LISTA.filter((p) => p.tipo === "cena").length;
+  const lunchCount = PAQUETES_LISTA.filter((p) => p.tipo === "lunch").length;
 
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -51,7 +58,7 @@ export default function Presupuestos() {
   }
 
   return (
-    <section id="presupuestos" className="relative py-28 lg:py-36" style={{ background: "#080808" }}>
+    <section id="presupuesto" className="relative py-28 lg:py-36" style={{ background: "#080808" }}>
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
       <div className="max-w-6xl mx-auto px-6 lg:px-10">
@@ -60,11 +67,13 @@ export default function Presupuestos() {
         <motion.div
           initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.65 }}
-          className="flex flex-col items-center text-center mb-16"
+          className="flex flex-col items-center text-center mb-12"
         >
           <span className="text-gold text-[10px] tracking-[0.5em] uppercase mb-4">Nuestros paquetes</span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
-            style={{ fontFamily: "var(--font-display, serif)" }}>
+          <h2
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
+            style={{ fontFamily: "var(--font-display, serif)" }}
+          >
             Elegí tu<br /><span className="text-gold italic">propuesta</span>
           </h2>
           <div className="flex items-center gap-4 mt-2">
@@ -74,57 +83,147 @@ export default function Presupuestos() {
           </div>
         </motion.div>
 
-        {/* Categorías */}
-        {(["cena", "lunch"] as const).map((tipo) => (
-          <div key={tipo} className="mb-16">
-            <p className="text-gold/60 text-[10px] tracking-[0.5em] uppercase mb-6 text-center">
-              {tipo === "cena" ? "— Cenas —" : "— Lunch —"}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {PAQUETES_LISTA.filter((p) => p.tipo === tipo).map((p, i) => (
+        {/* Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex justify-center mb-14"
+        >
+          <div className="flex border border-white/10 p-1 gap-1">
+            {(["cena", "lunch"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "px-10 py-3 text-xs tracking-[0.4em] uppercase font-medium transition-all duration-300",
+                  tab === t
+                    ? "bg-gold text-charcoal"
+                    : "text-white/40 hover:text-white/70"
+                )}
+              >
+                {t === "cena" ? "Cenas" : "Lunches"}
+                <span className={cn("ml-2 text-[10px]", tab === t ? "text-charcoal/60" : "text-white/20")}>
+                  {t === "cena" ? cenaCount : lunchCount}
+                </span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Cards */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.32 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {visible.map((p, i) => {
+              const isPopular = POPULAR.includes(p.id);
+              return (
                 <motion.div
                   key={p.id}
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.08 }}
-                  className="border border-white/8 hover:border-gold/30 transition-colors duration-300 flex flex-col"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className={cn(
+                    "relative border flex flex-col transition-colors duration-300",
+                    isPopular
+                      ? "border-gold/40 hover:border-gold/65"
+                      : "border-white/8 hover:border-gold/25"
+                  )}
                 >
-                  {/* Preview imagen */}
+                  {/* Badge */}
+                  {isPopular && (
+                    <div className="absolute top-0 right-0 z-10 bg-gold text-charcoal text-[9px] tracking-[0.3em] uppercase font-bold px-3 py-1">
+                      Más popular
+                    </div>
+                  )}
+
+                  {/* Image */}
                   <div className="relative overflow-hidden" style={{ aspectRatio: "3/2" }}>
-                    <img src={p.imagen} alt={p.nombre}
-                      className="w-full h-full object-cover object-top opacity-80 hover:opacity-100 transition-opacity duration-500"
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.imagen}
+                      alt={p.nombre}
+                      className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
                     <div className="absolute bottom-4 left-4">
-                      <p className="text-gold text-[10px] tracking-[0.4em] uppercase">
+                      <p className="text-gold text-[9px] tracking-[0.4em] uppercase mb-0.5">
                         {p.tipo === "cena" ? "Cena" : "Lunch"}
                       </p>
                       <h3 className="text-white font-bold text-xl" style={{ fontFamily: "var(--font-display, serif)" }}>
                         {p.nombre}
                       </h3>
                     </div>
+
+                    <div className="absolute bottom-4 right-4 text-right">
+                      <p className="text-white/40 text-[9px] uppercase tracking-wider">desde</p>
+                      <p className="text-gold font-bold text-base leading-tight">{formatPrecio(p.precio)}</p>
+                      <p className="text-white/35 text-[9px]">por persona</p>
+                    </div>
                   </div>
 
-                  {/* Contenido */}
+                  {/* Content */}
                   <div className="p-6 flex flex-col gap-4 flex-1">
-                    <ul className="flex flex-col gap-1.5">
+                    {/* Resumen */}
+                    <ul className="grid grid-cols-2 gap-y-2 gap-x-3">
                       {p.resumen.map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-white/50 text-xs">
-                          <span className="text-gold/60">✦</span> {item}
+                        <li key={item} className="flex items-center gap-1.5 text-white/55 text-xs">
+                          <Check size={11} className="text-gold/70 shrink-0" />
+                          {item}
                         </li>
                       ))}
                     </ul>
+
+                    <div className="h-px bg-white/6" />
+
+                    {/* Service highlights */}
+                    <ul className="flex flex-col gap-1.5">
+                      {p.servicios.slice(0, 3).map((s) => (
+                        <li key={s} className="flex items-center gap-2 text-white/35 text-xs">
+                          <span className="w-1 h-1 rounded-full bg-gold/40 shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                      {p.servicios.length > 3 && (
+                        <li className="text-white/20 text-xs pl-3">
+                          +{p.servicios.length - 3} servicios más incluidos
+                        </li>
+                      )}
+                    </ul>
+
+                    {/* CTA */}
                     <button
                       onClick={() => setModalPaquete(p.id)}
-                      className="mt-auto py-3 border border-gold/40 text-gold text-xs tracking-[0.4em] uppercase hover:bg-gold hover:text-charcoal transition-all duration-300"
+                      className={cn(
+                        "mt-auto py-3 text-xs tracking-[0.4em] uppercase transition-all duration-300",
+                        isPopular
+                          ? "bg-gold text-charcoal hover:bg-gold-light"
+                          : "border border-gold/35 text-gold hover:bg-gold hover:text-charcoal"
+                      )}
                     >
                       Solicitar presupuesto
                     </button>
                   </div>
                 </motion.div>
-              ))}
-            </div>
-          </div>
-        ))}
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Nota pie */}
+        <motion.p
+          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center text-white/20 text-[11px] mt-10 tracking-wider"
+        >
+          Precios referenciales · El valor final se calcula según la cantidad de invitados y la fecha del evento
+        </motion.p>
       </div>
 
       {/* ── MODAL ── */}
@@ -169,8 +268,10 @@ export default function Presupuestos() {
                       Por ser un evento de {form.invitados} personas, recibirás tu propuesta completa a la brevedad.
                     </p>
                   )}
-                  <button onClick={cerrarModal}
-                    className="mt-4 py-3 px-8 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors">
+                  <button
+                    onClick={cerrarModal}
+                    className="mt-4 py-3 px-8 bg-gold text-charcoal text-xs font-semibold tracking-widest uppercase hover:bg-gold-light transition-colors"
+                  >
                     Cerrar
                   </button>
                 </div>
@@ -229,7 +330,9 @@ export default function Presupuestos() {
                     <select value={form.tipo_evento} onChange={(e) => set("tipo_evento", e.target.value)}
                       required className={`${inputClass} bg-[#111]`}>
                       <option value="" style={{ background: "#111", color: "#fff" }}>Seleccioná...</option>
-                      {TIPOS_EVENTO.map((t) => <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>)}
+                      {TIPOS_EVENTO.map((t) => (
+                        <option key={t} value={t} style={{ background: "#111", color: "#fff" }}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -244,8 +347,11 @@ export default function Presupuestos() {
                     <p className="text-red-400 text-xs">Hubo un error al enviar. Intentá de nuevo.</p>
                   )}
 
-                  <button type="submit" disabled={estado === "sending"}
-                    className="flex items-center justify-center gap-2 py-3.5 bg-gold hover:bg-gold-light text-charcoal font-semibold text-xs tracking-[0.4em] uppercase transition-colors disabled:opacity-50">
+                  <button
+                    type="submit"
+                    disabled={estado === "sending"}
+                    className="flex items-center justify-center gap-2 py-3.5 bg-gold hover:bg-gold-light text-charcoal font-semibold text-xs tracking-[0.4em] uppercase transition-colors disabled:opacity-50"
+                  >
                     <Send size={14} />
                     {estado === "sending" ? "Enviando..." : "Solicitar presupuesto"}
                   </button>

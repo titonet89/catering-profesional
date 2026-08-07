@@ -2,7 +2,6 @@ import Navbar          from "@/components/public/Navbar";
 import Hero            from "@/components/public/Hero";
 import ComoTrabajamos  from "@/components/public/ComoTrabajamos";
 import Services        from "@/components/public/Services";
-import BudgetBuilder   from "@/components/public/BudgetBuilder";
 import Presupuestos    from "@/components/public/Presupuestos";
 import Alquiler        from "@/components/public/Alquiler";
 import Galeria         from "@/components/public/Galeria";
@@ -19,7 +18,6 @@ export default function HomePage() {
         <Hero />
         <ComoTrabajamos />
         <Services />
-        <BudgetBuilder />
         <Presupuestos />
         <Alquiler />
         <Galeria />

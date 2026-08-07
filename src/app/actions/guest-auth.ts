@@ -160,6 +160,7 @@ export async function createSolicitudGuestAction(
   const tipo_evento  = (formData.get("tipo_evento")  as string) ?? "";
   const invitados      = Number(formData.get("invitados") ?? 0);
   const precio_override = parsePrice(formData.get("precio_override"));
+  const notas_admin    = ((formData.get("notas_admin") as string) ?? "").trim();
 
   if (!paquete || !nombre || !email || !telefono || !fecha_evento || !lugar || !tipo_evento || !invitados) {
     return { error: "Completá todos los campos obligatorios" };
@@ -170,7 +171,7 @@ export async function createSolicitudGuestAction(
     .from("presupuesto_solicitudes")
     .insert([{
       paquete, nombre, email, telefono, fecha_evento, lugar, tipo_evento,
-      invitados, precio_override, mensaje: "", estado: "pendiente_aprobacion",
+      invitados, precio_override, notas_admin, mensaje: "", estado: "pendiente_aprobacion",
       guest_id: session.guestId,
     }])
     .select("id")

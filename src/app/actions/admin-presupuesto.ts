@@ -138,13 +138,19 @@ export async function createSolicitudAdminAction(
 
 // ─── Aprobar / rechazar solicitud de colaborador ──────────────────────────────
 
-export async function aprobarSolicitudAction(id: string): Promise<{ error?: string }> {
+export async function aprobarSolicitudAction(
+  id: string,
+  opts?: { notas_admin?: string; precio_override?: number | null }
+): Promise<{ error?: string }> {
   const isAdmin = await getSession();
   if (!isAdmin) return { error: "No autorizado" };
   const db = supabaseAdmin();
+  const updates: Record<string, unknown> = { estado: "aprobado" };
+  if (opts?.notas_admin) updates.notas_admin = opts.notas_admin;
+  if (opts?.precio_override != null) updates.precio_override = opts.precio_override;
   const { error } = await db
     .from("presupuesto_solicitudes")
-    .update({ estado: "aprobado" })
+    .update(updates)
     .eq("id", id);
   return error ? { error: "Error al aprobar" } : {};
 }

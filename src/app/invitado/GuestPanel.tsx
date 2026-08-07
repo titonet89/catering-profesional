@@ -175,7 +175,7 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
               <button
                 type="submit"
                 disabled={updatePending}
@@ -183,10 +183,19 @@ function SolicitudRow({ solicitud }: { solicitud: Solicitud }) {
               >
                 <Save size={13} /> {updatePending ? "Guardando..." : solicitud.estado === "rechazado" ? "Guardar y reenviar" : "Guardar cambios"}
               </button>
-              <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 border border-white/20 text-white/50 hover:text-white text-xs tracking-wider transition-colors">
-                <ExternalLink size={13} /> Ver PDF
-              </a>
+
+              {/* PDF: solo disponible cuando está aprobado */}
+              {solicitud.estado === "aprobado" ? (
+                <a href={presupuestoUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-xs tracking-wider transition-colors">
+                  <ExternalLink size={13} /> Ver y descargar PDF
+                </a>
+              ) : (
+                <span className="flex items-center justify-center gap-2 py-2.5 px-4 border border-white/8 text-white/20 text-xs">
+                  <ExternalLink size={13} /> PDF no disponible aún
+                </span>
+              )}
+
               {solicitud.estado === "aprobado" && (
                 <a href={waUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#25D366] text-white text-xs tracking-wider hover:opacity-90 transition-opacity">
@@ -300,6 +309,16 @@ function NuevaSolicitudForm({ onClose, session }: { onClose: () => void; session
           <label className="text-white/30 text-[10px] tracking-widest uppercase">Precio por persona (ARS)</label>
           <input type="text" inputMode="numeric" name="precio_override" placeholder="Ej: 59900 (opcional)" className={inputClass} />
           <p className="text-white/20 text-[10px]">Solo números — ej: 59900</p>
+        </div>
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <label className="text-white/30 text-[10px] tracking-widest uppercase">Notas y personalizaciones</label>
+          <textarea
+            name="notas_admin"
+            rows={3}
+            placeholder="Ej: Se agrega entrada de empanadas · Sin gluten para 5 personas · Decoración temática floral..."
+            className={`${inputClass} resize-none`}
+          />
+          <p className="text-white/20 text-[10px]">Estas notas se muestran en el PDF del presupuesto</p>
         </div>
       </div>
 
