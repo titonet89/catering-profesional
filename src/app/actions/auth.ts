@@ -97,10 +97,13 @@ export async function forgotPasswordAction(): Promise<{ error?: string; ok?: boo
   const token    = await signResetToken();
   const resetUrl = `${SITE_URL}/admin/reset?token=${token}`;
 
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
+  const toEmail   = process.env.ADMIN_EMAIL ?? "cateringprofesionaljujuy@gmail.com";
+
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
-    from:    "Catering Profesional <onboarding@resend.dev>",
-    to:      "cateringprofesionaljujuy@gmail.com",
+    from: fromEmail,
+    to:   toEmail,
     subject: "Restablecer contraseña — Panel Admin",
     html: `
       <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#0f0f0f;color:#fff;padding:40px;">

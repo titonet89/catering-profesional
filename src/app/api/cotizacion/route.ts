@@ -3,7 +3,8 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const CATERING_EMAIL = "cateringprofesionaljujuy@gmail.com";
+const CATERING_EMAIL = process.env.ADMIN_EMAIL ?? "cateringprofesionaljujuy@gmail.com";
+const FROM_EMAIL     = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
 
 const formatARS = (n: number) => "$ " + Math.round(n).toLocaleString("es-AR");
 
@@ -205,7 +206,7 @@ export async function POST(req: NextRequest) {
   // Email al catering siempre
   emails.push(
     resend.emails.send({
-      from:    "Catering Profesional <onboarding@resend.dev>",
+      from:    FROM_EMAIL,
       to:      CATERING_EMAIL,
       subject: `Nueva cotización ${nro}${solicitante.nombre ? ` — ${solicitante.nombre}` : ""}`,
       html:    buildEmailCatering(nro, fecha, items, total, solicitante),
@@ -216,7 +217,7 @@ export async function POST(req: NextRequest) {
   if (solicitante.email) {
     emails.push(
       resend.emails.send({
-        from:    "Catering Profesional <onboarding@resend.dev>",
+        from:    FROM_EMAIL,
         to:      solicitante.email,
         subject: `Tu cotización de alquiler ${nro} — Catering Profesional Jujuy`,
         html:    buildEmailCliente(nro, fecha, vence, items, total, solicitante.nombre || "Cliente"),
