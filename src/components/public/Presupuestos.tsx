@@ -209,6 +209,14 @@ export default function Presupuestos() {
                     >
                       Solicitar presupuesto
                     </button>
+                    <a
+                      href={`/presupuesto/muestra/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 text-center text-xs tracking-wider border border-white/15 text-white/40 hover:text-white/70 hover:border-white/30 transition-colors"
+                    >
+                      Ver propuesta completa →
+                    </a>
                   </div>
                 </motion.div>
               );
