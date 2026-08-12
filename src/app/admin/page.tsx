@@ -10,7 +10,7 @@ import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, t
 import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction, aprobarSolicitudAction, rechazarSolicitudAction } from "@/app/actions/admin-presupuesto";
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
-const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños"];
+const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones"];
 
 // ─── Marca de agua via Canvas (client-side, antes de subir) ──────────────────
 async function addWatermark(file: File): Promise<Blob> {
@@ -288,6 +288,8 @@ export default function AdminPage() {
   const [categoria, setCategoria]   = useState(CATEGORIAS[0]);
   const [fileCount, setFileCount]   = useState(0);
   const fileRef                     = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId]   = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   // consultas
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -459,7 +461,11 @@ export default function AdminPage() {
 
         if (storageError) { console.error("Error storage:", storageError.message); continue; }
 
-        const fileTitle = title.trim() || file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        const base = title.trim();
+        const existingInCat = items.filter((it) => it.categoria === categoria).length;
+        const fileTitle = base
+          ? (files.length > 1 ? `${base} ${i + 1}` : base)
+          : `${categoria} ${existingInCat + i + 1}`;
 
         const { error: dbError } = await supabase.from("gallery_items").insert([{
           title: fileTitle, categoria, storage_path: path, tipo, activo: true,
@@ -489,6 +495,13 @@ export default function AdminPage() {
     if (!confirm(`¿Eliminar "${item.title}"? Esta acción no se puede deshacer.`)) return;
     await supabase.storage.from("galeria").remove([item.storage_path]);
     await supabase.from("gallery_items").delete().eq("id", item.id);
+    await loadItems();
+  };
+
+  const renameItem = async (id: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    await supabase.from("gallery_items").update({ title: newTitle.trim() }).eq("id", id);
+    setEditingId(null);
     await loadItems();
   };
 
@@ -557,7 +570,7 @@ export default function AdminPage() {
                   <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Título (opcional — se usa el nombre del archivo)"
+                    placeholder="Título personalizado (opcional)"
                     className="bg-transparent border border-white/10 px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-gold/40"
                   />
                   <select
@@ -638,7 +651,33 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="p-3">
-                        <p className="text-white/80 text-xs font-medium truncate">{item.title}</p>
+                        {editingId === item.id ? (
+                          <div className="flex gap-1 items-center">
+                            <input
+                              autoFocus
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") renameItem(item.id, editingTitle);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                              className="flex-1 bg-transparent border-b border-gold/40 text-white text-xs px-1 py-0.5 focus:outline-none min-w-0"
+                            />
+                            <button onClick={() => renameItem(item.id, editingTitle)} className="text-gold hover:text-gold-light shrink-0"><CheckCircle size={13} /></button>
+                            <button onClick={() => setEditingId(null)} className="text-white/30 hover:text-white/60 shrink-0"><X size={13} /></button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 group/title">
+                            <p className="text-white/80 text-xs font-medium truncate flex-1">{item.title}</p>
+                            <button
+                              onClick={() => { setEditingId(item.id); setEditingTitle(item.title); }}
+                              title="Renombrar"
+                              className="opacity-0 group-hover/title:opacity-100 text-white/30 hover:text-gold transition-opacity shrink-0"
+                            >
+                              <Pencil size={11} />
+                            </button>
+                          </div>
+                        )}
                         <p className="text-gold/50 text-[10px] tracking-wider uppercase mt-0.5">{item.categoria}</p>
                       </div>
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
