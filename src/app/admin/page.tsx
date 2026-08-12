@@ -436,6 +436,13 @@ export default function AdminPage() {
     setUploading(true);
     let ok = 0;
 
+    // Consultar Supabase directamente para saber cuántas fotos hay en la categoría
+    const { count: catCount } = await supabase
+      .from("gallery_items")
+      .select("*", { count: "exact", head: true })
+      .eq("categoria", categoria);
+    const startNum = (catCount ?? 0) + 1;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       setUploadProgress({ current: i + 1, total: files.length });
@@ -462,10 +469,9 @@ export default function AdminPage() {
         if (storageError) { console.error("Error storage:", storageError.message); continue; }
 
         const base = title.trim();
-        const existingInCat = items.filter((it) => it.categoria === categoria).length;
         const fileTitle = base
           ? (files.length > 1 ? `${base} ${i + 1}` : base)
-          : `${categoria} ${existingInCat + i + 1}`;
+          : `${categoria} ${startNum + i}`;
 
         const { error: dbError } = await supabase.from("gallery_items").insert([{
           title: fileTitle, categoria, storage_path: path, tipo, activo: true,
