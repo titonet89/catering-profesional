@@ -10,7 +10,7 @@ import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, t
 import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction, aprobarSolicitudAction, rechazarSolicitudAction } from "@/app/actions/admin-presupuesto";
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
-const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones"];
+const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones", "Detrás de escena"];
 
 // ─── Marca de agua via Canvas (client-side, antes de subir) ──────────────────
 async function addWatermark(file: File): Promise<Blob> {

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/supabase";
 
-const CATEGORIAS = ["Todos", "Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones"] as const;
+const CATEGORIAS = ["Todos", "Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones", "Detrás de escena"] as const;
 type Categoria = (typeof CATEGORIAS)[number];
 
 interface Item {
