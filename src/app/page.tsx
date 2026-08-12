@@ -16,12 +16,12 @@ export default function HomePage() {
       <Navbar />
       <main>
         <Hero />
-        <ComoTrabajamos />
+        <Galeria />
         <Services />
         <Presupuestos />
-        <Alquiler />
-        <Galeria />
         <Testimonios />
+        <ComoTrabajamos />
+        <Alquiler />
         <FAQ />
         <Contacto />
       </main>
