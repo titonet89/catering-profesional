@@ -15,6 +15,17 @@ export type GalleryItem = {
   created_at: string;
 };
 
+export type Review = {
+  id: string;
+  nombre: string;
+  email: string;
+  evento: string;
+  comentario: string;
+  estrellas: number;
+  aprobado: boolean;
+  created_at: string;
+};
+
 export type ContactoSubmission = {
   id?: string;
   nombre: string;

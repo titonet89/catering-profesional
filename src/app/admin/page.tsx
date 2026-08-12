@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useActionState } from "react";
 import { supabase } from "@/lib/supabase";
-import type { GalleryItem } from "@/lib/supabase";
-import { Upload, Trash2, Eye, EyeOff, LogOut, Image as ImageIcon, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus, ShoppingBag } from "lucide-react";
+import type { GalleryItem, Review } from "@/lib/supabase";
+import { Upload, Trash2, Eye, EyeOff, LogOut, Image as ImageIcon, MessageSquare, Lock, FileText, ExternalLink, CheckCircle, Clock, Users, UserPlus, ToggleLeft, ToggleRight, Copy, Pencil, X, Package, Plus, ShoppingBag, Star } from "lucide-react";
 import VajillaTab from "./VajillaTab";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
@@ -49,7 +49,7 @@ async function addWatermark(file: File): Promise<Blob> {
   });
 }
 
-type Tab = "galeria" | "consultas" | "presupuestos" | "vajilla" | "seguridad" | "colaboradores";
+type Tab = "galeria" | "consultas" | "resenas" | "presupuestos" | "vajilla" | "seguridad" | "colaboradores";
 
 type Solicitud = {
   id: string;
@@ -294,6 +294,10 @@ export default function AdminPage() {
   // consultas
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
+  // reseñas
+  const [reviews, setReviews]               = useState<Review[]>([]);
+  const [reviewsLoaded, setReviewsLoaded]   = useState(false);
+
   // presupuestos
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [solicitudAbierta, setSolicitudAbierta] = useState<string | null>(null);
@@ -327,6 +331,26 @@ export default function AdminPage() {
 
   // cambio de contraseña
   const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
+
+  const loadReviews = async () => {
+    const { data } = await supabase
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (data) setReviews(data);
+    setReviewsLoaded(true);
+  };
+
+  const approveReview = async (id: string) => {
+    await supabase.from("reviews").update({ aprobado: true }).eq("id", id);
+    await loadReviews();
+  };
+
+  const rejectReview = async (id: string) => {
+    if (!confirm("¿Eliminar esta reseña?")) return;
+    await supabase.from("reviews").delete().eq("id", id);
+    await loadReviews();
+  };
 
   const loadItems = async () => {
     const { data } = await supabase
@@ -418,6 +442,7 @@ export default function AdminPage() {
   // Cargar colaboradores cuando se abre el tab (lazy)
   useEffect(() => {
     if (tab === "colaboradores" && !guestUsersLoaded) loadGuestUsers();
+    if (tab === "resenas"       && !reviewsLoaded)    loadReviews();
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -537,6 +562,10 @@ export default function AdminPage() {
         {([
           ["galeria",      ImageIcon,     "Galería"],
           ["consultas",    MessageSquare, "Consultas"],
+          ["resenas",      Star, (() => {
+            const pendientes = reviews.filter(r => !r.aprobado).length;
+            return pendientes > 0 ? `Reseñas (${pendientes})` : "Reseñas";
+          })()],
           ["presupuestos", FileText, (() => {
             const nAprobacion = solicitudes.filter(s => s.estado === "pendiente_aprobacion").length;
             const nPendiente  = solicitudes.filter(s => s.estado === "pendiente").length;
@@ -698,6 +727,97 @@ export default function AdminPage() {
                           <Trash2 size={13} />
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB RESEÑAS ── */}
+        {tab === "resenas" && (
+          <div className="flex flex-col gap-8">
+
+            {/* Pendientes */}
+            <div>
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-4">
+                Pendientes de aprobación ({reviews.filter(r => !r.aprobado).length})
+              </h2>
+              {reviews.filter(r => !r.aprobado).length === 0 ? (
+                <p className="text-white/20 text-sm py-8 text-center">No hay reseñas pendientes</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {reviews.filter(r => !r.aprobado).map((r) => (
+                    <div key={r.id} className="border border-amber-400/20 bg-amber-400/5 p-5 flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                          <p className="text-white font-semibold text-sm">{r.nombre}</p>
+                          <p className="text-white/30 text-xs mt-0.5">{r.email} · {r.evento}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          {Array.from({ length: r.estrellas }).map((_, i) => (
+                            <span key={i} className="text-gold text-xs">✦</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-white/60 text-sm leading-relaxed border-l border-white/10 pl-4 italic">
+                        &ldquo;{r.comentario}&rdquo;
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => approveReview(r.id)}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs tracking-wider hover:bg-emerald-500/25 transition-colors"
+                        >
+                          <CheckCircle size={13} /> Aprobar y publicar
+                        </button>
+                        <button
+                          onClick={() => rejectReview(r.id)}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 border border-red-400/20 text-red-400/70 text-xs tracking-wider hover:bg-red-500/20 transition-colors"
+                        >
+                          <X size={13} /> Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Aprobadas */}
+            <div>
+              <h2 className="text-white/60 text-[10px] tracking-[0.5em] uppercase mb-4">
+                Publicadas ({reviews.filter(r => r.aprobado).length})
+              </h2>
+              {reviews.filter(r => r.aprobado).length === 0 ? (
+                <p className="text-white/20 text-sm py-8 text-center">No hay reseñas publicadas aún</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {reviews.filter(r => r.aprobado).map((r) => (
+                    <div key={r.id} className="border border-white/8 p-5 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                          <p className="text-white/80 font-semibold text-sm">{r.nombre}</p>
+                          <p className="text-white/25 text-xs mt-0.5">{r.email} · {r.evento}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: r.estrellas }).map((_, i) => (
+                              <span key={i} className="text-gold/60 text-xs">✦</span>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => rejectReview(r.id)}
+                            className="text-white/20 hover:text-red-400 transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-white/40 text-xs leading-relaxed italic">
+                        &ldquo;{r.comentario}&rdquo;
+                      </p>
                     </div>
                   ))}
                 </div>
