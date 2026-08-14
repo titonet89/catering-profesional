@@ -166,7 +166,7 @@ export default function Navbar() {
 
           {/* Hamburger Mobile */}
           <button
-            className="lg:hidden text-white p-2 rounded"
+            className="lg:hidden text-white p-2.5 rounded"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Abrir menú"
           >

@@ -133,7 +133,7 @@ export default function Contacto() {
                     <div>
                       <p className="text-white/30 text-[10px] tracking-[0.4em] uppercase mb-1">{label}</p>
                       {href ? (
-                        <a href={href} className="text-white/70 hover:text-gold transition-colors duration-300 text-sm tracking-wide">
+                        <a href={href} className="text-white/70 hover:text-gold transition-colors duration-300 text-sm tracking-wide py-1 inline-block">
                           {valor}
                         </a>
                       ) : (

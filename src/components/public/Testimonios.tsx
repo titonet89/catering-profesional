@@ -232,12 +232,14 @@ export default function Testimonios() {
             <button onClick={prev} className="w-11 h-11 flex items-center justify-center border border-white/10 hover:border-gold/40 text-white/40 hover:text-gold transition-all duration-300" aria-label="Anterior">
               <ChevronLeft size={18} />
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {source.map((_, i) => (
                 <button key={i} onClick={() => setIdx(i)}
-                  className={`transition-all duration-300 rounded-full ${i === idx ? "w-6 h-1.5 bg-gold" : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"}`}
+                  className="p-2 flex items-center justify-center"
                   aria-label={`Ir al testimonio ${i + 1}`}
-                />
+                >
+                  <span className={`block transition-all duration-300 rounded-full ${i === idx ? "w-6 h-1.5 bg-gold" : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"}`} />
+                </button>
               ))}
             </div>
             <button onClick={next} className="w-11 h-11 flex items-center justify-center border border-white/10 hover:border-gold/40 text-white/40 hover:text-gold transition-all duration-300" aria-label="Siguiente">
@@ -253,9 +255,9 @@ export default function Testimonios() {
             { valor: "5★",   label: "Calificación promedio" },
             { valor: "98%",  label: "Clientes que repiten" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-[#080808] flex flex-col items-center py-8 px-4 gap-2">
-              <span className="text-3xl sm:text-4xl font-bold text-gold" style={{ fontFamily: "var(--font-display, serif)" }}>{stat.valor}</span>
-              <span className="text-white/30 text-xs tracking-widest uppercase text-center">{stat.label}</span>
+            <div key={stat.label} className="bg-[#080808] flex flex-col items-center py-6 sm:py-8 px-2 sm:px-4 gap-2">
+              <span className="text-2xl sm:text-4xl font-bold text-gold" style={{ fontFamily: "var(--font-display, serif)" }}>{stat.valor}</span>
+              <span className="text-white/30 text-[9px] sm:text-xs tracking-widest uppercase text-center leading-snug">{stat.label}</span>
             </div>
           ))}
         </motion.div>

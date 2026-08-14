@@ -28,6 +28,7 @@ export default function WhatsAppButton() {
           exit={{ opacity: 0, scale: 0.5, y: 20 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
           className="fixed bottom-6 right-6 z-50 flex items-end gap-3"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           {/* Globo de texto — desaparece solo a los 15 segundos */}
           <AnimatePresence>
@@ -37,13 +38,13 @@ export default function WhatsAppButton() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.3 }}
-                className="relative flex items-center bg-white text-charcoal text-sm font-medium px-4 py-2.5 shadow-xl shadow-black/20 mb-1"
+                className="relative flex items-center bg-white text-charcoal text-sm font-medium px-4 py-2.5 shadow-xl shadow-black/20 mb-1 max-w-[calc(100vw-5.5rem)]"
                 style={{ borderRadius: "4px" }}
               >
                 <span>¡Buenas! ¿En qué podemos ayudarle?</span>
                 <button
                   onClick={() => setTooltip(false)}
-                  className="ml-3 text-charcoal/40 hover:text-charcoal transition-colors"
+                  className="ml-3 p-1 text-charcoal/40 hover:text-charcoal transition-colors shrink-0"
                   aria-label="Cerrar"
                 >
                   <X size={13} />

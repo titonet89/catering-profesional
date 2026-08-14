@@ -159,7 +159,7 @@ export default function Hero() {
               onClick={() => {
                 document.querySelector("#servicios")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="group relative px-10 py-3.5 border border-gold/60 text-white text-xs tracking-[0.35em] uppercase hover:bg-gold/10 transition-all duration-500 overflow-hidden"
+              className="group relative px-10 py-4 border border-gold/60 text-white text-xs tracking-[0.35em] uppercase hover:bg-gold/10 transition-all duration-500 overflow-hidden"
             >
               <span className="relative z-10">Descubrí nuestros servicios</span>
               {/* Efecto brillo al pasar el mouse */}
@@ -175,7 +175,7 @@ export default function Hero() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
         <button
           onClick={scrollDown}
-          className="flex flex-col items-center gap-2 text-white/25 hover:text-white/50 transition-colors duration-300 group"
+          className="flex flex-col items-center gap-2 text-white/25 hover:text-white/50 transition-colors duration-300 group min-w-[44px] min-h-[44px] justify-center"
           aria-label="Scroll"
         >
           <motion.div

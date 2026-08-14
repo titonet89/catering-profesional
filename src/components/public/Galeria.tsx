@@ -93,7 +93,7 @@ function Lightbox({ items, index, onClose, onGoTo }: {
         <span className="text-white/20 text-[11px] tracking-[0.3em]">{index + 1} / {items.length}</span>
         <button
           onClick={onClose}
-          className="w-9 h-9 flex items-center justify-center border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition-all"
+          className="w-11 h-11 flex items-center justify-center border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition-all"
         >
           <X size={16} />
         </button>
@@ -334,7 +334,7 @@ export default function Galeria() {
               key={cat}
               onClick={() => { setFiltro(cat); setSelIndex(null); }}
               className={cn(
-                "relative px-4 py-2 text-[11px] tracking-[0.3em] uppercase transition-all duration-300",
+                "relative px-4 py-2.5 min-h-[44px] text-[11px] tracking-[0.3em] uppercase transition-all duration-300",
                 filtro === cat ? "text-gold" : "text-white/30 hover:text-white/60"
               )}
             >
