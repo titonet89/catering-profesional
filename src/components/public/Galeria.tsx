@@ -258,6 +258,9 @@ export default function Galeria() {
   const [filtro, setFiltro]     = useState<Categoria>("Todos");
   const [selIndex, setSelIndex] = useState<number | null>(null);
   const [dbItems, setDbItems]   = useState<Item[]>([]);
+  const [showAll, setShowAll]   = useState(false);
+
+  const INITIAL_COUNT = 6;
 
   useEffect(() => {
     supabase
@@ -332,7 +335,7 @@ export default function Galeria() {
           {CATEGORIAS.map((cat) => (
             <button
               key={cat}
-              onClick={() => { setFiltro(cat); setSelIndex(null); }}
+              onClick={() => { setFiltro(cat); setSelIndex(null); setShowAll(false); }}
               className={cn(
                 "relative px-4 py-2.5 min-h-[44px] text-[11px] tracking-[0.3em] uppercase transition-all duration-300",
                 filtro === cat ? "text-gold" : "text-white/30 hover:text-white/60"
@@ -362,9 +365,9 @@ export default function Galeria() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="columns-1 sm:columns-2 lg:columns-3 gap-x-3"
+            className="columns-2 sm:columns-2 lg:columns-3 gap-x-2 sm:gap-x-3"
           >
-            {visible.map((item, i) => (
+            {(showAll ? visible : visible.slice(0, INITIAL_COUNT)).map((item, i) => (
               <MasonryCard
                 key={item.id}
                 item={item}
@@ -380,6 +383,19 @@ export default function Galeria() {
           <p className="text-center text-white/20 text-sm py-20 tracking-wider">
             No hay fotos en esta categoría aún
           </p>
+        )}
+
+        {/* Ver más / Ver menos */}
+        {visible.length > INITIAL_COUNT && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="group flex items-center gap-2 px-8 py-3 border border-white/10 hover:border-gold/40 text-white/40 hover:text-white/80 text-[11px] tracking-[0.3em] uppercase transition-all duration-300"
+            >
+              {showAll ? "Ver menos" : `Ver todas las fotos (${visible.length})`}
+              <span className={`text-gold transition-transform duration-300 ${showAll ? "rotate-180" : ""}`}>↓</span>
+            </button>
+          </div>
         )}
 
         {/* CTA WhatsApp */}
