@@ -1,23 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase-server";
+import { clip, escapeHtml, isValidEmail, rateLimit } from "@/lib/security";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function POST(req: NextRequest) {
-  const { nombre, email, evento, mensaje } = await req.json();
+  if (!(await rateLimit("contacto", 5, 10 * 60_000))) {
+    return NextResponse.json({ error: "Demasiadas consultas. Probá en unos minutos." }, { status: 429 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const nombre  = clip(body.nombre, 80).replace(/[\r\n]/g, " ");
+  const email   = clip(body.email, 254);
+  const evento  = clip(body.evento, 60).replace(/[\r\n]/g, " ");
+  const mensaje = clip(body.mensaje, 3000);
 
   if (!nombre || !email) {
     return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
   }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+  }
 
-  // Guardar en Supabase
-  const { error: dbError } = await supabase
+  // Guardar en Supabase (con la clave del servidor: el público no necesita
+  // permisos sobre esta tabla)
+  const { error: dbError } = await supabaseAdmin()
     .from("contacto_submissions")
     .insert([{ nombre, email, evento, mensaje }]);
 
@@ -25,11 +33,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error al guardar consulta" }, { status: 500 });
   }
 
+  // Versiones escapadas para el HTML del email
+  const h = {
+    nombre:  escapeHtml(nombre),
+    email:   escapeHtml(email),
+    evento:  escapeHtml(evento),
+    mensaje: escapeHtml(mensaje).replace(/\n/g, "<br>"),
+  };
+
   // Enviar email de notificación
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
   const { error: emailError } = await resend.emails.send({
     from:    fromEmail,
-    to:      "cateringprofesionaljujuy@gmail.com",
+    to:      process.env.ADMIN_EMAIL ?? "cateringprofesionaljujuy@gmail.com",
+    replyTo: email,
     subject: `Nueva consulta de ${nombre} — ${evento || "Sin especificar"}`,
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #0f0f0f; color: #fff; padding: 40px;">
@@ -41,22 +58,22 @@ export async function POST(req: NextRequest) {
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #888; font-size: 13px; width: 140px;">Nombre</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #fff; font-size: 14px;">${nombre}</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #fff; font-size: 14px;">${h.nombre}</td>
           </tr>
           <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #888; font-size: 13px;">Email</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #C9A84C; font-size: 14px;">
-              <a href="mailto:${email}" style="color: #C9A84C;">${email}</a>
+              <a href="mailto:${h.email}" style="color: #C9A84C;">${h.email}</a>
             </td>
           </tr>
           <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #888; font-size: 13px;">Tipo de evento</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #fff; font-size: 14px;">${evento || "Sin especificar"}</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #222; color: #fff; font-size: 14px;">${h.evento || "Sin especificar"}</td>
           </tr>
           ${mensaje ? `
           <tr>
             <td style="padding: 12px 0; color: #888; font-size: 13px; vertical-align: top;">Mensaje</td>
-            <td style="padding: 12px 0; color: #fff; font-size: 14px; line-height: 1.6;">${mensaje}</td>
+            <td style="padding: 12px 0; color: #fff; font-size: 14px; line-height: 1.6;">${h.mensaje}</td>
           </tr>
           ` : ""}
         </table>

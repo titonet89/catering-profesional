@@ -83,6 +83,39 @@ export function findVajillaItem(id: string): VajillaItem | undefined {
   return ALL_VAJILLA_ITEMS.find((i) => i.id === id);
 }
 
+/**
+ * Reconstruye los ítems de un pedido usando SOLO ids y cantidades, con los
+ * precios del catálogo. Así nadie puede alterar precios desde el navegador.
+ * Devuelve null si algún ítem o cantidad es inválido.
+ */
+export function itemsDesdeCantidades(cantidades: Record<string, unknown>): VajillaItemPedido[] | null {
+  const items: VajillaItemPedido[] = [];
+  for (const [id, rawQty] of Object.entries(cantidades)) {
+    const qty = Number(rawQty);
+    if (qty === 0) continue;
+    const item = findVajillaItem(id);
+    if (!item || !Number.isInteger(qty) || qty < 0 || qty > 10000) return null;
+    items.push({
+      id: item.id, nombre: item.nombre, unidad: item.unidad, qty,
+      precio_unitario: item.precio, subtotal: item.precio * qty,
+    });
+  }
+  return items;
+}
+
+/** Igual que itemsDesdeCantidades, pero a partir del JSON de ítems que envía un formulario. */
+export function itemsDesdeJson(raw: string): VajillaItemPedido[] | null {
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { return null; }
+  if (!Array.isArray(parsed)) return null;
+  const cantidades: Record<string, unknown> = {};
+  for (const i of parsed) {
+    if (!i || typeof i !== "object" || typeof (i as { id?: unknown }).id !== "string") return null;
+    cantidades[(i as { id: string }).id] = (i as { qty?: unknown }).qty;
+  }
+  return itemsDesdeCantidades(cantidades);
+}
+
 export function calcTotalVajilla(items: VajillaItemPedido[]): number {
   return items.reduce((s, i) => s + i.subtotal, 0);
 }

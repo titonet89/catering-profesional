@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { rateLimit } from "@/lib/security";
 import {
   signSessionToken,
   signResetToken,
@@ -13,7 +14,7 @@ import {
   SESSION_EXPIRY,
 } from "@/lib/session";
 
-const SITE_URL = "https://catering-profesional.vercel.app";
+const SITE_URL = "https://www.cateringprofesional.com.ar";
 
 // ─── Helpers Supabase ───────────────────────────────────────────────────────
 
@@ -68,6 +69,9 @@ export async function loginAction(
   const password = (formData.get("password") as string) ?? "";
   if (!password) return { error: "Ingresá tu contraseña" };
 
+  if (!(await rateLimit("login-admin", 5, 15 * 60_000)))
+    return { error: "Demasiados intentos. Esperá 15 minutos y volvé a probar." };
+
   const hash = await getPasswordHash();
   if (!hash) return { error: "Error de configuración. Contactá al soporte." };
 
@@ -93,6 +97,9 @@ export async function forgotPasswordAction(): Promise<{ error?: string; ok?: boo
   if (!apiKey || apiKey.startsWith("pegá")) {
     return { error: "El servicio de email no está configurado aún." };
   }
+
+  if (!(await rateLimit("forgot-admin", 3, 60 * 60_000)))
+    return { error: "Ya se enviaron varios links. Revisá tu email o esperá una hora." };
 
   const token    = await signResetToken();
   const resetUrl = `${SITE_URL}/admin/reset?token=${token}`;
@@ -171,6 +178,9 @@ export async function changePasswordAction(
     return { error: "La contraseña nueva debe tener al menos 8 caracteres" };
   if (newPwd !== confirm)
     return { error: "Las contraseñas no coinciden" };
+
+  if (!(await rateLimit("cambiar-pwd-admin", 5, 15 * 60_000)))
+    return { error: "Demasiados intentos. Esperá 15 minutos y volvé a probar." };
 
   const hash = await getPasswordHash();
   if (!hash) return { error: "Error de configuración." };

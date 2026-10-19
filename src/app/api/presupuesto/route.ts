@@ -1,40 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { PAQUETES, PRECIO_MINIMO_INVITADOS, formatPrecio } from "@/data/paquetes";
+import { supabaseAdmin } from "@/lib/supabase-server";
+import { clip, escapeHtml, isValidEmail, rateLimit } from "@/lib/security";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-const SITE_URL = "https://cateringprofesional.com.ar";
-const OWNER_PHONE = "5493884036629";
+const SITE_URL = "https://www.cateringprofesional.com.ar";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { paquete: paqueteId, nombre, email, telefono, fecha, lugar, tipo_evento, invitados, mensaje } = body;
+  if (!(await rateLimit("presupuesto", 5, 10 * 60_000))) {
+    return NextResponse.json({ error: "Demasiadas solicitudes. Probá en unos minutos." }, { status: 429 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const paqueteId   = clip(body.paquete, 40);
+  const nombre      = clip(body.nombre, 80).replace(/[\r\n]/g, " ");
+  const email       = clip(body.email, 254);
+  const telefono    = clip(body.telefono, 30);
+  const fecha       = clip(body.fecha, 10);
+  const lugar       = clip(body.lugar, 120);
+  const tipo_evento = clip(body.tipo_evento, 60);
+  const mensaje     = clip(body.mensaje, 3000);
+  const invitados   = Number(body.invitados);
 
   if (!paqueteId || !nombre || !email || !telefono || !fecha || !lugar || !tipo_evento || !invitados) {
     return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
   }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return NextResponse.json({ error: "Fecha inválida" }, { status: 400 });
+  }
+  if (!Number.isInteger(invitados) || invitados < 1 || invitados > 5000) {
+    return NextResponse.json({ error: "Cantidad de invitados inválida" }, { status: 400 });
+  }
 
-  const paquete = PAQUETES[paqueteId as keyof typeof PAQUETES];
+  const paquete = Object.hasOwn(PAQUETES, paqueteId) ? PAQUETES[paqueteId as keyof typeof PAQUETES] : undefined;
   if (!paquete) return NextResponse.json({ error: "Paquete inválido" }, { status: 400 });
 
-  const esGrupoGrande = Number(invitados) >= PRECIO_MINIMO_INVITADOS;
-  const total = esGrupoGrande ? paquete.precio * Number(invitados) : null;
+  const esGrupoGrande = invitados >= PRECIO_MINIMO_INVITADOS;
+  const total = esGrupoGrande ? paquete.precio * invitados : null;
 
-  // Guardar en Supabase
-  const { data: solicitud, error: dbError } = await supabase
+  // Guardar en Supabase (clave del servidor)
+  const { data: solicitud, error: dbError } = await supabaseAdmin()
     .from("presupuesto_solicitudes")
     .insert([{
       paquete: paqueteId,
       nombre, email, telefono,
       fecha_evento: fecha,
       lugar, tipo_evento,
-      invitados: Number(invitados),
-      mensaje: mensaje || "",
+      invitados,
+      mensaje,
       estado: "pendiente",
     }])
     .select("id")
@@ -59,7 +75,8 @@ export async function POST(req: NextRequest) {
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? "Catering Profesional <onboarding@resend.dev>";
   await resend.emails.send({
     from: fromEmail,
-    to: "cateringprofesionaljujuy@gmail.com",
+    to: process.env.ADMIN_EMAIL ?? "cateringprofesionaljujuy@gmail.com",
+    replyTo: email,
     subject: `${esGrupoGrande ? "🔔 " : "📋 "}Nueva solicitud: ${paquete.nombre} — ${nombre} (${invitados} personas)`,
     html: `
       <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#0f0f0f;color:#fff;padding:40px;">
@@ -82,7 +99,7 @@ export async function POST(req: NextRequest) {
           ].map(([k, v]) => `
             <tr>
               <td style="padding:10px 0;border-bottom:1px solid #222;color:#888;font-size:12px;width:160px">${k}</td>
-              <td style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-size:13px">${v}</td>
+              <td style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-size:13px">${escapeHtml(v).replace(/\n/g, "<br>")}</td>
             </tr>
           `).join("")}
         </table>

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { itemsDesdeCantidades } from "@/data/vajilla";
+import { clip, escapeHtml, isValidEmail, rateLimit } from "@/lib/security";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -194,12 +196,56 @@ function buildEmailCatering(
 </html>`;
 }
 
-export async function POST(req: NextRequest) {
-  const { cantidades, solicitante, items, total, nro, fecha, vence } = await req.json();
+function fechaLarga(d: Date) {
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit", month: "long", year: "numeric", timeZone: "America/Argentina/Jujuy",
+  });
+}
 
-  if (!items || items.length === 0) {
+export async function POST(req: NextRequest) {
+  if (!(await rateLimit("cotizacion", 5, 10 * 60_000))) {
+    return NextResponse.json({ error: "Demasiadas solicitudes. Probá en unos minutos." }, { status: 429 });
+  }
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body.cantidades !== "object" || body.cantidades === null) {
+    return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
+  }
+
+  // Artículos y precios SIEMPRE desde el catálogo del servidor: lo que mande
+  // el navegador como "items" o "total" se ignora.
+  const pedido = itemsDesdeCantidades(body.cantidades);
+  if (!pedido) {
+    return NextResponse.json({ error: "Artículos inválidos" }, { status: 400 });
+  }
+  if (pedido.length === 0) {
     return NextResponse.json({ error: "Sin artículos seleccionados" }, { status: 400 });
   }
+  const items: ItemCotizacion[] = pedido.map((i) => ({
+    nombre: i.nombre, unidad: i.unidad, precio: i.precio_unitario, qty: i.qty,
+  }));
+  const total = pedido.reduce((s, i) => s + i.subtotal, 0);
+
+  const emailRaw = clip(body.solicitante?.email, 254);
+  if (emailRaw && !isValidEmail(emailRaw)) {
+    return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+  }
+  // Texto del usuario escapado antes de entrar al HTML de los emails
+  const nombreRaw = clip(body.solicitante?.nombre, 80).replace(/[\r\n]/g, " ");
+  const solicitante = {
+    nombre: escapeHtml(nombreRaw),
+    email:  escapeHtml(emailRaw),
+    tel:    clip(body.solicitante?.tel, 30).replace(/[^\d+\s()-]/g, ""),
+  };
+
+  // El número lo genera el navegador para que coincida con su versión impresa;
+  // si no tiene el formato esperado, generamos uno acá.
+  const hoy = new Date();
+  const nro = typeof body.nro === "string" && /^CP-\d{4}-\d{4}$/.test(body.nro)
+    ? body.nro
+    : `CP-${String(hoy.getFullYear()).slice(2)}${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getMinutes() * 60 + hoy.getSeconds()).padStart(4, "0")}`;
+  const fecha = fechaLarga(hoy);
+  const vence = fechaLarga(new Date(hoy.getTime() + 7 * 86_400_000));
 
   const emails: Promise<unknown>[] = [];
 
@@ -208,19 +254,20 @@ export async function POST(req: NextRequest) {
     resend.emails.send({
       from:    FROM_EMAIL,
       to:      CATERING_EMAIL,
-      subject: `Nueva cotización ${nro}${solicitante.nombre ? ` — ${solicitante.nombre}` : ""}`,
+      subject: `Nueva cotización ${nro}${nombreRaw ? ` — ${nombreRaw}` : ""}`,
       html:    buildEmailCatering(nro, fecha, items, total, solicitante),
     })
   );
 
   // Email al cliente solo si tiene email
-  if (solicitante.email) {
+  if (emailRaw) {
     emails.push(
       resend.emails.send({
         from:    FROM_EMAIL,
-        to:      solicitante.email,
+        to:      emailRaw,
         subject: `Tu cotización de alquiler ${nro} — Catering Profesional Jujuy`,
         html:    buildEmailCliente(nro, fecha, vence, items, total, solicitante.nombre || "Cliente"),
+        replyTo: CATERING_EMAIL,
       })
     );
   }
@@ -233,6 +280,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error al enviar emails" }, { status: 500 });
   }
 
-  void cantidades; // recibido pero no necesario en el servidor
-  return NextResponse.json({ ok: true, emailCliente: !!solicitante.email });
+  return NextResponse.json({ ok: true, emailCliente: !!emailRaw });
 }

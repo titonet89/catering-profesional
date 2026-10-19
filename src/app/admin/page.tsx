@@ -8,6 +8,12 @@ import VajillaTab from "./VajillaTab";
 import { logoutAction, changePasswordAction } from "@/app/actions/auth";
 import { createGuestUserAction, toggleGuestActiveAction, listGuestUsersAction, type GuestUser } from "@/app/actions/guest-auth";
 import { getPaquetePreciosAction, updatePaquetePrecioAction, createSolicitudAdminAction, getAdminWhatsappAction, setAdminWhatsappAction, aprobarSolicitudAction, rechazarSolicitudAction } from "@/app/actions/admin-presupuesto";
+import {
+  listReviewsAction, approveReviewAction, deleteReviewAction,
+  listSubmissionsAction, listSolicitudesAction, marcarEnviadoAction,
+  listGalleryAction, countGalleryCategoriaAction, createGalleryUploadAction, registerGalleryItemAction,
+  toggleGalleryItemAction, renameGalleryItemAction, deleteGalleryItemAction,
+} from "@/app/actions/admin-panel";
 import { PAQUETES, PAQUETES_LISTA, formatPrecio, PRECIO_MINIMO_INVITADOS, type PaqueteId } from "@/data/paquetes";
 
 const CATEGORIAS = ["Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones", "Detrás de escena"];
@@ -333,39 +339,27 @@ export default function AdminPage() {
   const [changePwdState, changePwdAction, changePwdPending] = useActionState(changePasswordAction, null);
 
   const loadReviews = async () => {
-    const { data } = await supabase
-      .from("reviews")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setReviews(data);
+    setReviews(await listReviewsAction());
     setReviewsLoaded(true);
   };
 
   const approveReview = async (id: string) => {
-    await supabase.from("reviews").update({ aprobado: true }).eq("id", id);
+    await approveReviewAction(id);
     await loadReviews();
   };
 
   const rejectReview = async (id: string) => {
     if (!confirm("¿Eliminar esta reseña?")) return;
-    await supabase.from("reviews").delete().eq("id", id);
+    await deleteReviewAction(id);
     await loadReviews();
   };
 
   const loadItems = async () => {
-    const { data } = await supabase
-      .from("gallery_items")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setItems(data);
+    setItems(await listGalleryAction());
   };
 
   const loadSubmissions = async () => {
-    const { data } = await supabase
-      .from("contacto_submissions")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setSubmissions(data);
+    setSubmissions(await listSubmissionsAction() as Submission[]);
   };
 
   const loadPrecios = async () => {
@@ -422,15 +416,11 @@ export default function AdminPage() {
   };
 
   const loadSolicitudes = async () => {
-    const { data } = await supabase
-      .from("presupuesto_solicitudes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setSolicitudes(data);
+    setSolicitudes(await listSolicitudesAction() as Solicitud[]);
   };
 
   const marcarEnviado = async (id: string) => {
-    await supabase.from("presupuesto_solicitudes").update({ estado: "enviado" }).eq("id", id);
+    await marcarEnviadoAction(id);
     await loadSolicitudes();
   };
 
@@ -461,12 +451,8 @@ export default function AdminPage() {
     setUploading(true);
     let ok = 0;
 
-    // Consultar Supabase directamente para saber cuántas fotos hay en la categoría
-    const { count: catCount } = await supabase
-      .from("gallery_items")
-      .select("*", { count: "exact", head: true })
-      .eq("categoria", categoria);
-    const startNum = (catCount ?? 0) + 1;
+    // Consultar cuántas fotos hay en la categoría para numerar los títulos
+    const startNum = (await countGalleryCategoriaAction(categoria)) + 1;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -484,12 +470,13 @@ export default function AdminPage() {
           ext = file.name.split(".").pop() ?? "mp4";
         }
 
-        const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const tipo = file.type.startsWith("video/") ? "video" : "foto";
 
+        // Permiso de subida firmado por el servidor (solo para admins)
+        const { path, token } = await createGalleryUploadAction(ext);
         const { error: storageError } = await supabase.storage
           .from("galeria")
-          .upload(path, uploadBlob, { cacheControl: "3600", upsert: false });
+          .uploadToSignedUrl(path, token, uploadBlob, { cacheControl: "3600" });
 
         if (storageError) { console.error("Error storage:", storageError.message); continue; }
 
@@ -498,9 +485,9 @@ export default function AdminPage() {
           ? (files.length > 1 ? `${base} ${i + 1}` : base)
           : `${categoria} ${startNum + i}`;
 
-        const { error: dbError } = await supabase.from("gallery_items").insert([{
-          title: fileTitle, categoria, storage_path: path, tipo, activo: true,
-        }]);
+        const { error: dbError } = await registerGalleryItemAction({
+          title: fileTitle, categoria, storage_path: path, tipo,
+        });
 
         if (!dbError) ok++;
       } catch (err) {
@@ -518,20 +505,19 @@ export default function AdminPage() {
   };
 
   const toggleActivo = async (item: GalleryItem) => {
-    await supabase.from("gallery_items").update({ activo: !item.activo }).eq("id", item.id);
+    await toggleGalleryItemAction(item.id, !item.activo);
     await loadItems();
   };
 
   const deleteItem = async (item: GalleryItem) => {
     if (!confirm(`¿Eliminar "${item.title}"? Esta acción no se puede deshacer.`)) return;
-    await supabase.storage.from("galeria").remove([item.storage_path]);
-    await supabase.from("gallery_items").delete().eq("id", item.id);
+    await deleteGalleryItemAction(item.id);
     await loadItems();
   };
 
   const renameItem = async (id: string, newTitle: string) => {
     if (!newTitle.trim()) return;
-    await supabase.from("gallery_items").update({ title: newTitle.trim() }).eq("id", id);
+    await renameGalleryItemAction(id, newTitle);
     setEditingId(null);
     await loadItems();
   };

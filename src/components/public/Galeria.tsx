@@ -4,8 +4,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import type { GalleryItem } from "@/lib/supabase";
+
+/** Foto de la galería ya preparada en el servidor (ver app/page.tsx). */
+export type GaleriaFoto = {
+  id: string;
+  title: string;
+  categoria: string;
+  imageUrl: string;
+};
 
 const CATEGORIAS = ["Todos", "Bodas", "Corporativos", "Galas", "Cumpleaños", "15 Años", "Decoraciones", "Detrás de escena"] as const;
 type Categoria = (typeof CATEGORIAS)[number];
@@ -31,14 +37,13 @@ const PLACEHOLDERS: Item[] = [
   { id: "p9", title: "Decoración floral",  categoria: "Decoraciones", gradient: "from-[#081a05] via-[#051203] to-[#030802]", placeholderH: 270 },
 ];
 
-function toItem(g: GalleryItem, index: number): Item {
-  const url = supabase.storage.from("galeria").getPublicUrl(g.storage_path).data.publicUrl;
+function toItem(g: GaleriaFoto): Item {
   return {
     id: g.id,
     title: g.title,
     categoria: g.categoria as Exclude<Categoria, "Todos">,
     gradient: "from-[#1a1208] via-[#100c05] to-[#080703]",
-    imageUrl: url,
+    imageUrl: g.imageUrl,
     placeholderH: 280,
   };
 }
@@ -254,25 +259,14 @@ function MasonryCard({ item, index, onClick }: {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function Galeria() {
+export default function Galeria({ fotos }: { fotos: GaleriaFoto[] }) {
   const [filtro, setFiltro]     = useState<Categoria>("Todos");
   const [selIndex, setSelIndex] = useState<number | null>(null);
-  const [dbItems, setDbItems]   = useState<Item[]>([]);
   const [showAll, setShowAll]   = useState(false);
 
   const INITIAL_COUNT = 6;
 
-  useEffect(() => {
-    supabase
-      .from("gallery_items")
-      .select("*")
-      .eq("activo", true)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) setDbItems(data.map(toItem));
-      });
-  }, []);
-
+  const dbItems = fotos.map(toItem);
   const source  = dbItems.length > 0 ? dbItems : PLACEHOLDERS;
   const visible = filtro === "Todos" ? source : source.filter((i) => i.categoria === filtro);
 

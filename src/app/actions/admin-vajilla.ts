@@ -2,7 +2,7 @@
 
 import { getSession } from "./auth";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import type { VajillaItemPedido } from "@/data/vajilla";
+import { itemsDesdeJson, type VajillaItemPedido } from "@/data/vajilla";
 
 export type CotizacionVajilla = {
   id: string;
@@ -55,8 +55,8 @@ export async function createCotizacionVajillaAdminAction(
 
   if (!nombre || !telefono) return { error: "Completá nombre y teléfono" };
 
-  let items: VajillaItemPedido[];
-  try { items = JSON.parse(itemsRaw); } catch { return { error: "Ítems inválidos" }; }
+  const items = itemsDesdeJson(itemsRaw);
+  if (!items) return { error: "Ítems inválidos" };
   if (!items.length) return { error: "Agregá al menos un artículo" };
 
   const total = items.reduce((s, i) => s + i.subtotal, 0);

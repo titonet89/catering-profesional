@@ -19,8 +19,10 @@ export async function signSessionToken(): Promise<string> {
 
 export async function verifySessionToken(token: string): Promise<boolean> {
   try {
-    await jwtVerify(token, secret());
-    return true;
+    // Los tokens de invitado y de reset usan el mismo secreto: hay que
+    // exigir explícitamente la marca de admin para no aceptarlos acá.
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
+    return payload.admin === true;
   } catch {
     return false;
   }
@@ -36,7 +38,7 @@ export async function signResetToken(): Promise<string> {
 
 export async function verifyResetToken(token: string): Promise<boolean> {
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     return payload.type === "reset";
   } catch {
     return false;

@@ -20,7 +20,7 @@ export async function signGuestToken(payload: GuestPayload): Promise<string> {
 
 export async function verifyGuestToken(token: string): Promise<GuestPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     if (payload.type !== "guest") return null;
     return {
       guestId:   payload.guestId   as string,

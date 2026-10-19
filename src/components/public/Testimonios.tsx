@@ -1,23 +1,19 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
+import { useState, useActionState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import type { Review } from "@/lib/supabase";
 import { submitReviewAction } from "@/app/actions/reviews";
 
-// ─── Placeholders mientras no hay reseñas reales aprobadas ───────────────────
-
-const PLACEHOLDERS = [
-  { id: "p1", nombre: "Claudia Mamani",       evento: "Casamiento",        estrellas: 5, comentario: "La verdad que quedé re contra contenta!! Mis suegros no creían que iba a salir tan bien jaja y al final todos terminaron felices. La comida estuvo buenísima, el personal muy amable con todos los invitados. Gracias por hacer tan especial el día de Rodrigo y mío ❤️" },
-  { id: "p2", nombre: "Roberto Alvarado",     evento: "Cena de empresa",   estrellas: 5, comentario: "Los contratamos para el cierre de año, unas 60 personas. Todo muy prolijo, llegaron puntual y lo que más me sorprendió fue la atención al detalle. Varios compañeros me preguntaron quién había organizado la comida. Los recomiendo sin dudarlo." },
-  { id: "p3", nombre: "Griselda Torino",      evento: "15 años de Sofía",  estrellas: 5, comentario: "Organicé los 15 de mi hija con ellos y fue una de las mejores decisiones que tomé. Muy atentos desde el primer momento, me ayudaron con el menú porque yo no sabía bien qué pedir. Todo el salón quedó divino y los chicos del servicio re bien. Gracias totales!" },
-  { id: "p4", nombre: "Diego Colque",         evento: "Cumpleaños de 50",  estrellas: 5, comentario: "Mi señora me organizó una sorpresa para mis 50 con ellos. Cuando llegué y vi todo me emocioné de verdad. La comida abundante y rica, las bebidas muy bien surtidas. Los 80 invitados se fueron contentos y varios me pidieron el contacto." },
-  { id: "p5", nombre: "Lic. Fernanda Sajama", evento: "Acto institucional", estrellas: 5, comentario: "Contratamos el servicio para un acto oficial del municipio. Cumplieron en tiempo y forma con todo lo acordado, los mozos muy presentables y correctos. Para eventos del sector público donde la imagen importa, son una opción muy confiable." },
-  { id: "p6", nombre: "Analía Flores",        evento: "Boda",              estrellas: 5, comentario: "Desde la primera reunión nos sentimos muy cómodos. Nos dieron varias opciones de menú según nuestro presupuesto y nunca nos presionaron. El día del evento todo salió 10 puntos. Las fotos quedaron hermosas también gracias a cómo estaban puestas las mesas." },
-  { id: "p7", nombre: "Carlos Pérez Quiroga", evento: "Gala solidaria",    estrellas: 5, comentario: "Organizamos una cena benéfica y necesitábamos que todo saliera perfecto. Se portaron increíble, muy profesionales pero sin perder el trato humano. Varios de los presentes ya me consultaron el contacto para sus propios eventos. Se los recomiendo a ojos cerrados." },
-];
+/** Reseña aprobada, solo con los campos que se pueden mostrar (sin email). */
+export type ResenaPublica = {
+  id: string;
+  nombre: string;
+  evento: string;
+  comentario: string;
+  estrellas: number;
+  created_at: string;
+};
 
 const EVENTOS = ["Boda", "15 años", "Cumpleaños", "Corporativo / Empresa", "Gala", "Acto oficial", "Otro"];
 
@@ -147,26 +143,14 @@ const fadeUp = (delay = 0) => ({
   transition:  { duration: 0.65, delay, ease: "easeOut" as const },
 });
 
-export default function Testimonios() {
+export default function Testimonios({ resenas }: { resenas: ResenaPublica[] }) {
   const [idx, setIdx] = useState(0);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from("reviews")
-      .select("*")
-      .eq("aprobado", true)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) setReviews(data);
-      });
-  }, []);
-
-  const source = reviews.length > 0 ? reviews : PLACEHOLDERS;
+  const source = resenas;
   const prev = () => setIdx((i) => (i - 1 + source.length) % source.length);
   const next = () => setIdx((i) => (i + 1) % source.length);
-  const t = source[Math.min(idx, source.length - 1)];
+  const t = source.length > 0 ? source[Math.min(idx, source.length - 1)] : null;
 
   return (
     <section id="testimonios" className="relative py-28 lg:py-36 overflow-hidden" style={{ background: "#080808" }}>
@@ -193,7 +177,16 @@ export default function Testimonios() {
           </div>
         </motion.div>
 
+        {/* Sin reseñas aprobadas todavía: invitar a dejar la primera */}
+        {!t && (
+          <motion.p {...fadeUp(0.15)} className="text-center text-white/45 text-lg max-w-xl mx-auto" style={{ fontFamily: "var(--font-display, serif)" }}>
+            Estamos reuniendo las primeras opiniones de nuestros clientes.
+            Si celebraste con nosotros, contanos cómo fue.
+          </motion.p>
+        )}
+
         {/* Carrusel */}
+        {t && (
         <motion.div {...fadeUp(0.15)} className="relative">
           <AnimatePresence mode="wait">
             <motion.div
@@ -220,9 +213,7 @@ export default function Testimonios() {
               <div className="flex flex-col items-center gap-1">
                 <p className="text-white font-semibold tracking-wide text-sm">{t.nombre}</p>
                 <p className="text-gold/60 text-xs tracking-widest uppercase">{t.evento}</p>
-                {"created_at" in t && typeof t.created_at === "string" && (
-                  <p className="text-white/20 text-[10px] tracking-wider mt-0.5">{tiempoRelativo(t.created_at)}</p>
-                )}
+                <p className="text-white/20 text-[10px] tracking-wider mt-0.5">{tiempoRelativo(t.created_at)}</p>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -247,6 +238,7 @@ export default function Testimonios() {
             </button>
           </div>
         </motion.div>
+        )}
 
         {/* Stats */}
         <motion.div {...fadeUp(0.25)} className="grid grid-cols-3 gap-px bg-white/5 mt-20">

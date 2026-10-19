@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { signGuestToken, verifyGuestToken, GUEST_SESSION_EXPIRY } from "@/lib/guest-session";
 import { getSession } from "./auth";
+import { rateLimit } from "@/lib/security";
 import type { PaqueteId } from "@/data/paquetes";
 
 // Acepta "$ 59.900", "59.900", "59900", "59,900" → 59900
@@ -35,7 +36,17 @@ export async function getGuestSession() {
   const jar   = await cookies();
   const token = jar.get("guest_session")?.value;
   if (!token) return null;
-  return verifyGuestToken(token);
+  const payload = await verifyGuestToken(token);
+  if (!payload) return null;
+
+  // El token dura 7 días: confirmar que la cuenta siga activa para que
+  // desactivar un colaborador le corte el acceso de inmediato.
+  const { data } = await supabaseAdmin()
+    .from("guest_users")
+    .select("activo")
+    .eq("id", payload.guestId)
+    .single();
+  return data?.activo ? payload : null;
 }
 
 async function setGuestCookie(guestId: string, username: string, nombre: string, whatsapp: string) {
@@ -60,6 +71,9 @@ export async function loginGuestAction(
   const password  = (formData.get("password") as string) ?? "";
 
   if (!username || !password) return { error: "Completá usuario y contraseña" };
+
+  if (!(await rateLimit("login-invitado", 8, 15 * 60_000)))
+    return { error: "Demasiados intentos. Esperá 15 minutos y volvé a probar." };
 
   const db = supabaseAdmin();
   const { data: guest } = await db
