@@ -20,21 +20,54 @@ const SITE_URL = "https://www.cateringprofesional.com.ar";
 
 async function getPasswordHash(): Promise<string | null> {
   const db = supabaseAdmin();
-  const { data } = await db
+  // Sin .single(): si la tabla quedó con filas repetidas de password_hash,
+  // .single() fallaba y el login mostraba "Error de configuración".
+  // Se toma la más reciente.
+  const { data, error } = await db
     .from("admin_config")
     .select("value")
     .eq("key", "password_hash")
-    .single();
-  return data?.value ?? null;
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .limit(1);
+  if (!error) return data?.[0]?.value ?? null;
+
+  // Plan B por si la tabla no tuviera la columna updated_at
+  console.error("getPasswordHash:", error.message);
+  const { data: fallback, error: fbError } = await db
+    .from("admin_config")
+    .select("value")
+    .eq("key", "password_hash")
+    .limit(1);
+  if (fbError) console.error("getPasswordHash (fallback):", fbError.message);
+  return fallback?.[0]?.value ?? null;
 }
 
-async function setPasswordHash(hash: string) {
+/** Guarda la contraseña. Devuelve false si no se pudo guardar. */
+async function setPasswordHash(hash: string): Promise<boolean> {
   const db = supabaseAdmin();
-  await db.from("admin_config").upsert({
-    key: "password_hash",
-    value: hash,
-    updated_at: new Date().toISOString(),
-  });
+  const updated_at = new Date().toISOString();
+
+  // Actualizar todas las filas existentes (por si hay repetidas) y, si no
+  // había ninguna, crearla. No depende de que "key" tenga restricción única.
+  const { data: actualizadas, error: updError } = await db
+    .from("admin_config")
+    .update({ value: hash, updated_at })
+    .eq("key", "password_hash")
+    .select("key");
+  if (updError) {
+    console.error("setPasswordHash (update):", updError.message);
+    return false;
+  }
+  if (actualizadas && actualizadas.length > 0) return true;
+
+  const { error: insError } = await db
+    .from("admin_config")
+    .insert({ key: "password_hash", value: hash, updated_at });
+  if (insError) {
+    console.error("setPasswordHash (insert):", insError.message);
+    return false;
+  }
+  return true;
 }
 
 // ─── Cookie de sesión ───────────────────────────────────────────────────────
@@ -156,7 +189,8 @@ export async function resetPasswordAction(
     return { error: "El link expiró o es inválido. Solicitá uno nuevo." };
 
   const hash = await bcrypt.hash(newPwd, 12);
-  await setPasswordHash(hash);
+  if (!(await setPasswordHash(hash)))
+    return { error: "No se pudo guardar la contraseña. Intentá de nuevo en unos minutos." };
 
   redirect("/admin/login?reset=ok");
 }
@@ -189,7 +223,8 @@ export async function changePasswordAction(
   if (!valid) return { error: "La contraseña actual es incorrecta" };
 
   const newHash = await bcrypt.hash(newPwd, 12);
-  await setPasswordHash(newHash);
+  if (!(await setPasswordHash(newHash)))
+    return { error: "No se pudo guardar la contraseña nueva. Intentá de nuevo." };
 
   return { success: "Contraseña actualizada correctamente" };
 }
